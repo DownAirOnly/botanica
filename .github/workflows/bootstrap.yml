@@ -1,7 +1,7 @@
 name: Import Botanica source
 on:
   push:
-    paths: ['bootstrap/source.b64']
+    paths: ['bootstrap/GO']
   workflow_dispatch:
 permissions:
   contents: write
@@ -12,9 +12,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Expand complete source package
         run: |
-          test -s bootstrap/source.b64
+          test -s bootstrap/GO
           mkdir -p /tmp/botanica-bootstrap
-          base64 -d bootstrap/source.b64 | tar -xJ -C /tmp/botanica-bootstrap
+          cat bootstrap/parts/*.b64 | base64 -d | tar -xJ -C /tmp/botanica-bootstrap
           cp -a /tmp/botanica-bootstrap/botanica/. .
           rm -rf bootstrap .github/workflows/bootstrap.yml
       - name: Commit source files to main
