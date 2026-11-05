@@ -1,5 +1,18 @@
 # Changelog
 
+## v6 — 2026-11-05 (workspace layout rebuild)
+
+- Rebuilt the app shell around three main work areas: **Today**, **Inventory**, and **Production**, while keeping Settings available from the header/sidebar.
+- **Inventory** brings stock verification/restocking, herb catalog and pricing, and finished-goods catalog/counts into one work area with contextual section selectors.
+- **Production** groups active work/checklists, recipes, measured batches and packaging/bottling together, with separate focuses instead of five unrelated primary tabs.
+- **Today** is a task-focused workbench with prioritized attention, four actionable status indicators, ongoing work and ready bulk, and direct task shortcuts.
+- Separated finished-goods editing/counting from bottling; bottling shows only products linked to formulas and prioritizes SKUs with recorded bulk available.
+- Preserved existing formulas, stock movements, purchase history, supplier costs, backup import/export, cloud sync, theme settings, and all underlying inventory behaviors.
+- This is a presentation/navigation release only. Database schema remains v4; no destructive workspace migration or reimport is required.
+- Updated responsive design for smaller mobile screens and wide desktop layouts, including three-item mobile navigation and horizontally scrollable subsection selectors.
+
+
+
 ## v5 — 2026-11-05 (daily business workflows)
 
 - Replaced vanity catalog counts on Herbal Home with action priorities: ingredient and finished-product counts to verify, confirmed replenishment, production tasks, and recorded bulk ready for packaging.
