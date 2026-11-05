@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {Shell} from './components/Shell';
 import {HomePage} from './pages/HomePage';
 import {HerbsPage} from './pages/HerbsPage';
+import {RestockPage} from './pages/RestockPage';
 import {RecipesPage} from './pages/RecipesPage';
 import {BatchesPage} from './pages/BatchesPage';
 import {ProductsPage} from './pages/ProductsPage';
@@ -18,9 +19,10 @@ export default function App(){
  return <Shell page={page} onNavigate={go}>
    {page==='home'&&<HomePage onNavigate={go} onOpenHerb={openHerb}/>}
    {page==='items'&&<ItemsPage/>}
-   {page==='herbs'&&<HerbsPage selected={herb} onSelect={setHerb}/>}
-   {page==='recipes'&&<RecipesPage onMakeBatch={makeBatch}/>}
-   {page==='batches'&&<BatchesPage key={batchRecipe||'fresh'} selectedRecipe={batchRecipe}/>}
+   {page==='herbs'&&<HerbsPage selected={herb} onSelect={setHerb} onOpenRestock={()=>go('restock')}/>}
+   {page==='restock'&&<RestockPage onBack={()=>go('home')} onOpenHerb={openHerb}/>}
+   {page==='recipes'&&<RecipesPage onMakeBatch={makeBatch} onOpenRestock={()=>go('restock')}/>}
+   {page==='batches'&&<BatchesPage key={batchRecipe||'fresh'} selectedRecipe={batchRecipe} onOpenRestock={()=>go('restock')}/>}
    {page==='products'&&<ProductsPage/>}
    {page==='settings'&&<SettingsPage/>}
  </Shell>;
