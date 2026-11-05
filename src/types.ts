@@ -35,7 +35,7 @@ export interface RecipeIngredient { herbId: string; form: StockForm; parts: numb
 export interface Recipe { id: string; name: string; kind: FormulaKind; ingredients: RecipeIngredient[]; notes?: string; active: boolean; }
 export interface BatchIngredient { herbId: string; form: StockForm; amountOz: number; }
 export interface Batch { id: string; recipeId: string; recipeName: string; amountOz: number; unit: 'oz_wt' | 'fl_oz'; ingredients: BatchIngredient[]; date: string; notes?: string; }
-export interface Product { id: string; name: string; recipeId?: string; kind: FormulaKind | 'salve' | 'spray' | 'other'; packageOz: number; count: number; notes?: string; }
+export interface Product { id: string; name: string; recipeId?: string; kind: FormulaKind | 'salve' | 'spray' | 'other'; packageOz: number; count: number; countCheckedAt?:string; notes?: string; }
 export type ProductionStep = 'planned'|'preparing'|'waiting'|'ready'|'done';
 /** A production checklist item; never changes quantities by itself. */
 export interface ProductionTask {
