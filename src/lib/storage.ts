@@ -4,7 +4,7 @@ import { DB_VERSION, type BotanicaDB } from '../types';
 export function validateBackup(value:unknown):BotanicaDB {
   if(!value||typeof value!=='object')throw new Error('Not a Botanica backup.');
   const v=value as Partial<BotanicaDB>;
-  if(![1,2,DB_VERSION].includes(v.schemaVersion as number)||
+  if(![1,2,3,DB_VERSION].includes(v.schemaVersion as number)||
      !Array.isArray(v.herbs)||!Array.isArray(v.recipes)||!Array.isArray(v.movements)||
      !Array.isArray(v.vendors)||!Array.isArray(v.purchases)||!Array.isArray(v.products)||
      !Array.isArray(v.batches)||!v.bulk||typeof v.bulk!=='object')
@@ -19,13 +19,22 @@ export function validateBackup(value:unknown):BotanicaDB {
   if(v.schemaVersion!==1&&(!Array.isArray(v.items)||v.items.some(i=>!i||typeof i.name!=='string'||
     !Number.isFinite(i.quantity)||i.quantity<0||!Number.isFinite(i.threshold)||i.threshold<0)))
     throw new Error('Invalid general inventory items.');
-  if(v.schemaVersion===DB_VERSION){
+  if(v.schemaVersion>=3){
     if(!Array.isArray(v.priceQuotes)||v.priceQuotes.some(q=>!q||
       typeof q.id!=='string'||typeof q.herbId!=='string'||typeof q.vendorId!=='string'||
       !['dry','powder'].includes(q.form)||!Number.isFinite(q.pricePerLb)||q.pricePerLb<=0||
       typeof q.recordedAt!=='string'||!['manual','workbook','purchase','legacy'].includes(q.source)))
       throw new Error('Invalid supplier quote history.');
+  }
+  if(v.schemaVersion===DB_VERSION){
+    if(!Array.isArray(v.productionTasks)||v.productionTasks.some(t=>!t||typeof t.id!=='string'||
+      typeof t.name!=='string'||!['planned','preparing','waiting','ready','done'].includes(t.step)||
+      typeof t.createdAt!=='string'||typeof t.updatedAt!=='string'))
+      throw new Error('Invalid production task records.');
     return v as BotanicaDB;
+  }
+  if(v.schemaVersion===3){
+    return {...v,productionTasks:[],schemaVersion:DB_VERSION,appVersion:5} as BotanicaDB;
   }
   // Migrate v1/v2 backups without changing stock or erasing unknown source archives.
   // Old quotedPricePerLb is an undated dry-herb price, NOT a purchase.
@@ -38,8 +47,8 @@ export function validateBackup(value:unknown):BotanicaDB {
         pricePerLb:h.quotedPricePerLb,recordedAt:new Date().toISOString(),source:'legacy'});
     }
   }
-  return {...v,items:v.schemaVersion===1?[]:v.items!,priceQuotes:quotes,
-    schemaVersion:DB_VERSION,appVersion:4} as BotanicaDB;
+  return {...v,items:v.schemaVersion===1?[]:v.items!,priceQuotes:quotes,productionTasks:[],
+    schemaVersion:DB_VERSION,appVersion:5} as BotanicaDB;
 }
 export function downloadJSON(db:BotanicaDB){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`botanica-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);}
 export async function importJSON(file:File){return validateBackup(JSON.parse(await file.text()));}
