@@ -1,4 +1,5 @@
 import {recordPriceQuote} from './pricing';
+import {isCountVerified} from './workflow';
 import { FORM_UNIT, RECIPE_UNIT, makeId, type BotanicaDB, type FormulaKind, type Herb, type Purchase, type Recipe, type StockForm, type StockMovement, type Product } from '../types';
 
 export class StockError extends Error {}
@@ -14,7 +15,10 @@ export function adjustStock(db:BotanicaDB,herbId:string,form:StockForm,mode:'add
   const h=herbById(db,herbId),before=h.stock[form];
   const after=mode==='set'?amount:mode==='add'?before+amount:before-amount;
   if(after<0)throw new StockError('Not enough stock. Use a verified count correction if the inventory is wrong.');
-  const herbs=db.herbs.map(x=>x.id===herbId?{...x,stock:{...x.stock,[form]:after}}:x);
+  const herbs=db.herbs.map(x=>x.id===herbId?{...x,
+    stock:{...x.stock,[form]:after},
+    stockCheckedAt:mode==='set'?{...x.stockCheckedAt,[form]:new Date().toISOString()}:x.stockCheckedAt
+  }:x);
   return updated({...db,herbs,movements:[movement('adjustment','ingredient',herbId,before,after,FORM_UNIT[form],reason,form),...db.movements]});
 }
 export function saveHerb(db:BotanicaDB,h:Herb):BotanicaDB {
@@ -49,14 +53,14 @@ export function calculateBatch(db:BotanicaDB,recipe:Recipe,totalOz:number){
   const parts=recipe.ingredients.reduce((a,i)=>a+i.parts,0);
   if(!parts||!Number.isFinite(parts))throw new StockError('This recipe has no valid ratios.');
   return recipe.ingredients.map(i=>{
-    const available=herbById(db,i.herbId).stock[i.form];
+    const herb=herbById(db,i.herbId),available=herb.stock[i.form],verified=isCountVerified(herb,i.form);
     const need=totalOz*i.parts/parts;
-    return {...i,amountOz:need,available,enough:available+1e-9>=need};
+    return {...i,amountOz:need,available,verified,enough:verified&&available+1e-9>=need};
   });
 }
 export function completeBatch(db:BotanicaDB,recipeId:string,totalOz:number,notes=''):BotanicaDB {
   const recipe=db.recipes.find(r=>r.id===recipeId);if(!recipe)throw new StockError('Recipe not found.');
-  const amounts=calculateBatch(db,recipe,totalOz);if(amounts.some(x=>!x.enough))throw new StockError('Insufficient ingredient stock.');
+  const amounts=calculateBatch(db,recipe,totalOz);if(amounts.some(x=>!x.verified))throw new StockError('Verify required ingredient counts before recording a batch.');if(amounts.some(x=>!x.enough))throw new StockError('Insufficient ingredient stock.');
   const batchId=makeId(),date=new Date().toISOString();
   let herbs=db.herbs.map(h=>({...h,stock:{...h.stock}}));
   const movements:StockMovement[]=[];
@@ -87,7 +91,7 @@ export function packageProduct(db:BotanicaDB,productId:string,count:number):Bota
 }
 export function extractStock(db:BotanicaDB,herbId:string,form:'dry'|'powder',inputOz:number,outputFluidOz:number,notes:string):BotanicaDB {
   if(!okQuantity(inputOz)||!okQuantity(outputFluidOz)||!notes.trim())throw new StockError('Record positive ingredient input, measured liquid output, and processing notes.');
-  const h=herbById(db,herbId);if(h.stock[form]<inputOz)throw new StockError('Not enough raw material.');
+  const h=herbById(db,herbId);if(!isCountVerified(h,form))throw new StockError('Confirm the physical source-material count before recording extraction.');if(h.stock[form]<inputOz)throw new StockError('Not enough raw material.');
   const beforeRaw=h.stock[form],beforeExtract=h.stock.extract,source=makeId();
   return updated({...db,herbs:db.herbs.map(x=>x.id!==herbId?x:{...x,stock:{...x.stock,[form]:beforeRaw-inputOz,extract:beforeExtract+outputFluidOz}}),movements:[movement('extraction','ingredient',herbId,beforeRaw,beforeRaw-inputOz,'oz_wt',notes,form,source),movement('extraction','ingredient',herbId,beforeExtract,beforeExtract+outputFluidOz,'fl_oz',notes,'extract',source),...db.movements]});
 }
@@ -95,7 +99,7 @@ export function ensureVendor(db:BotanicaDB,name:string):{db:BotanicaDB;id:string
  const existing=db.vendors.find(v=>v.name.toLowerCase()===name.trim().toLowerCase());if(existing)return {db,id:existing.id};
  const id=makeId();return {db:updated({...db,vendors:[...db.vendors,{id,name:name.trim()}]}),id};
 }
-export const lowStockItems=(db:BotanicaDB)=>db.herbs.flatMap(h=>(['dry','powder','extract'] as StockForm[]).filter(f=>h.thresholds[f]>0&&h.stock[f]<=h.thresholds[f]).map(f=>({herb:h,form:f,stock:h.stock[f],threshold:h.thresholds[f]})));
+export const lowStockItems=(db:BotanicaDB)=>db.herbs.flatMap(h=>(['dry','powder','extract'] as StockForm[]).filter(f=>isCountVerified(h,f)&&h.thresholds[f]>0&&h.stock[f]<=h.thresholds[f]).map(f=>({herb:h,form:f,stock:h.stock[f],threshold:h.thresholds[f]})));
 export function totalCost(p:Purchase){return p.quantityOz/16*p.pricePerLb+p.shipping;}
 export function recipeLabel(r:Recipe){return r.kind==='tincture'?'Tincture · fl oz':'Tea · oz wt';}
 export function stockFormForKind(kind:FormulaKind):StockForm{return kind==='tincture'?'extract':'dry';}
@@ -105,7 +109,7 @@ export function adjustProductStock(db:BotanicaDB,productId:string,mode:'add'|'us
  if(!reason.trim())throw new StockError('A reason is required.');
  const before=p.count,after=mode==='set'?amount:mode==='add'?before+amount:before-amount;
  if(after<0)throw new StockError('Not enough units available.');
- return updated({...db,products:db.products.map(x=>x.id===p.id?{...x,count:after}:x),movements:[movement('adjustment','product',p.id,before,after,'units',reason),...db.movements]});
+ return updated({...db,products:db.products.map(x=>x.id===p.id?{...x,count:after,countCheckedAt:mode==='set'?new Date().toISOString():x.countCheckedAt}:x),movements:[movement('adjustment','product',p.id,before,after,'units',reason),...db.movements]});
 }
 export function adjustBulkStock(db:BotanicaDB,recipeId:string,mode:'add'|'use'|'set',amount:number,reason:string):BotanicaDB {
  const r=db.recipes.find(x=>x.id===recipeId);if(!r)throw new StockError('Linked recipe not found.');

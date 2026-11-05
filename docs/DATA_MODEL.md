@@ -50,3 +50,11 @@ The app supports importing exported schema v1 JSON backups; migration adds the n
 - A price quote is not a purchase and does not add stock. Purchase receipt remains a separate inventory transaction; its actual paid price is clearly marked in the price history.
 - Cost-book imports merge selectable exact matches and do not create new herbs, guess supplier names, or silently replace other workspace data.
 - Source workbook recipes and ingredient quantities remain private; no source spreadsheet is published.
+
+## v5 workflow and physical-count status (schema v4)
+
+- A missing `Herb.stockCheckedAt[form]` or `Product.countCheckedAt` signifies **not physically verified**. Numeric stock values still exist, and migration never changes them. Physical `set` adjustments log before/after quantities and mark that specific form or SKU as verified. A receipt alone does not certify previous baseline quantities.
+- Only physically verified ingredient amounts generate reorder alerts or satisfy batch/extraction availability. Unverified ingredient amounts are surfaced as 'needs count' instead of out-of-stock.
+- `ProductionTask` is a lightweight durable checklist with stages `planned`, `preparing`, `waiting`, `ready`, and `done`, and optional `dueOn`, `recipeId`, and `notes`. It does not perform stock movements. Future production scheduling must rely on actual owner-specified stages and durations.
+- Herbal Home derives lists from live data; new v5 restocking pages show only verified shortages, group by supplier quote when available and never make or place supplier orders automatically.
+- JSON backups from v1, v2, or v3 migrate to schema v4, keeping previous `priceQuotes`, purchases, movements and archival metadata. New schema records must have a `productionTasks` array.
