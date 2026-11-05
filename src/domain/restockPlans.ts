@@ -89,3 +89,17 @@ export function reviewRestockPlan(db:BotanicaDB,id:string,result:RestockReviewRe
     restockReviews:[{id:makeId(),planId:id,herbId:plan.herbId,form:plan.form,
       reviewedOn:today,result,notes:notes.trim()||undefined},...db.restockReviews]};
 }
+
+/** An order-needed review stays on the workbench until explicitly addressed. */
+export function pendingRestockFollowups(db:BotanicaDB){
+  return db.restockReviews.filter(r=>r.result==='consider_order'&&!r.resolvedOn)
+    .sort((a,b)=>b.reviewedOn.localeCompare(a.reviewedOn));
+}
+export function resolveRestockFollowup(db:BotanicaDB,reviewId:string,today=localDate()):BotanicaDB{
+  const review=db.restockReviews.find(r=>r.id===reviewId&&r.result==='consider_order'&&!r.resolvedOn);
+  if(!review)throw new Error('Pending follow-up not found.');
+  parseDate(today);
+  const now=new Date().toISOString();
+  return {...db,updatedAt:now,restockReviews:db.restockReviews.map(r=>r.id===reviewId?
+    {...r,resolvedOn:today}:r)};
+}
