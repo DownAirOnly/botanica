@@ -19,7 +19,7 @@ export function validateBackup(value:unknown):BotanicaDB {
   if(v.schemaVersion!==1&&(!Array.isArray(v.items)||v.items.some(i=>!i||typeof i.name!=='string'||
     !Number.isFinite(i.quantity)||i.quantity<0||!Number.isFinite(i.threshold)||i.threshold<0)))
     throw new Error('Invalid general inventory items.');
-  if(v.schemaVersion>=3){
+  if((v.schemaVersion as number)>=3){
     if(!Array.isArray(v.priceQuotes)||v.priceQuotes.some(q=>!q||
       typeof q.id!=='string'||typeof q.herbId!=='string'||typeof q.vendorId!=='string'||
       !['dry','powder'].includes(q.form)||!Number.isFinite(q.pricePerLb)||q.pricePerLb<=0||
