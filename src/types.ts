@@ -67,7 +67,7 @@ export interface HerbRestockPlan {
 }
 export interface HerbRestockReview {
   id:string;planId:string;herbId:string;form:'dry'|'powder';
-  reviewedOn:string;result:RestockReviewResult;notes?:string;
+  reviewedOn:string;result:RestockReviewResult;notes?:string;resolvedOn?:string;
 }
 export type ProductionStep = 'planned'|'preparing'|'waiting'|'ready'|'done';
 /** A production checklist item; never changes quantities by itself. */
