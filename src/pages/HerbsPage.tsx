@@ -4,6 +4,8 @@ import {Badge,Button,Card,EmptyState,Field,Metric,Modal,RowItem,SelectField,Tabs
 import {adjustStock,ensureVendor,extractStock,receivePurchase,saveHerb,lowStockItems,totalCost} from '../domain/inventory';
 import {FORM_LABEL,FORM_UNIT,FORMS,formatAmount,makeId,unitLabel,zeroStock,zeroThresholds,type Herb,type StockForm,type Purchase} from '../types';
 import {useApp} from '../state/AppContext';
+import {CostsPanel,CostsSummary} from '../components/Pricing';
+import {latestPriceQuote,quoteVendor} from '../domain/pricing';
 
 export function HerbsPage({selected,onSelect}:{selected:string|null;onSelect:(id:string|null)=>void}){
  const {db,setDB,notify,reportError}=useApp();const [query,setQuery]=useState('');const [filter,setFilter]=useState<'all'|'low'>('all');const [create,setCreate]=useState(false);const [name,setName]=useState('');
@@ -28,7 +30,7 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
  const [form,setForm]=useState<StockForm>('dry'),[mode,setMode]=useState<'add'|'use'|'set'>('add'),[qty,setQty]=useState(''),[reason,setReason]=useState('');
  const [pVendor,setPVendor]=useState(db.vendors.find(v=>v.id===herb.preferredVendorId)?.name||''),[pForm,setPForm]=useState<'dry'|'powder'>('dry'),[pQty,setPQty]=useState('16'),[pPrice,setPPrice]=useState(herb.quotedPricePerLb?.toString()||''),[pShipping,setPShipping]=useState('0'),[pDate,setPDate]=useState(new Date().toISOString().slice(0,10));
  const [eForm,setEForm]=useState<'dry'|'powder'>('dry'),[eInput,setEInput]=useState(''),[eOutput,setEOutput]=useState(''),[eNotes,setENotes]=useState('');
- const [editName,setEditName]=useState(herb.name),[aliases,setAliases]=useState(herb.aliases.join(', ')),[thresholds,setThresholds]=useState({...herb.thresholds}),[vendorId,setVendorId]=useState(herb.preferredVendorId||''),[quote,setQuote]=useState(herb.quotedPricePerLb?.toString()||'');
+ const [editName,setEditName]=useState(herb.name),[aliases,setAliases]=useState(herb.aliases.join(', ')),[thresholds,setThresholds]=useState({...herb.thresholds}),[vendorId,setVendorId]=useState(herb.preferredVendorId||'');
  const moves=db.movements.filter(m=>m.kind==='ingredient'&&m.itemId===herb.id).sort((a,b)=>b.at.localeCompare(a.at));
  const purchases=db.purchases.filter(p=>p.herbId===herb.id).sort((a,b)=>b.date.localeCompare(a.date));
  const connections=db.recipes.filter(r=>r.ingredients.some(i=>i.herbId===herb.id));
@@ -36,29 +38,24 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
  function applyAdjust(){if(!qty.trim()){reportError(new Error('Enter an amount.'));return;}run(()=>adjustStock(db,herb.id,form,mode,Number(qty),reason),'Stock adjustment recorded.');if(reason.trim()&&qty.trim())setAdjust(false);}
  function applyBuy(){try{if(!pVendor.trim())throw new Error('Enter a supplier name.');if(!pQty.trim()||!pPrice.trim()||!pShipping.trim()||!pDate)throw new Error('Complete the quantity, price, shipping and date fields.');const vendor=ensureVendor(db,pVendor);const purchase:Purchase={id:makeId(),herbId:herb.id,vendorId:vendor.id,form:pForm,quantityOz:Number(pQty),pricePerLb:Number(pPrice),shipping:Number(pShipping),date:pDate};const updated=receivePurchase(vendor.db,purchase);setDB(()=>updated);notify('Purchase received and stock updated.');setBuy(false);}catch(e){reportError(e);}}
  function applyExtract(){try{const next=extractStock(db,herb.id,eForm,Number(eInput),Number(eOutput),eNotes);setDB(()=>next);notify('Extraction recorded with measured input and output.');setExtract(false);}catch(e){reportError(e);}}
- function applyEdit(){try{const q=quote.trim()?Number(quote):undefined;if(q!==undefined&&(!Number.isFinite(q)||q<0))throw new Error('Cost per pound must be a nonnegative number.');const next=saveHerb(db,{...herb,name:editName.trim(),aliases:aliases.split(',').map(s=>s.trim()).filter(Boolean),thresholds,preferredVendorId:vendorId||undefined,quotedPricePerLb:q});setDB(()=>next);notify('Herb details updated.');setEditing(false);}catch(e){reportError(e);}}
+ function applyEdit(){try{const next=saveHerb(db,{...herb,name:editName.trim(),aliases:aliases.split(',').map(s=>s.trim()).filter(Boolean),thresholds,preferredVendorId:vendorId||undefined});setDB(()=>next);notify('Herb details updated.');setEditing(false);}catch(e){reportError(e);}}
  return <div className="content-stack">
   <div className="page-heading"><div><button className="back-link" onClick={onBack}><ArrowLeft size={16}/> All herbs</button><h2>{herb.name}</h2><p>Herb profile · stock, purchasing, and connected recipes</p></div><Button variant="secondary" onClick={()=>setEditing(true)}><SlidersHorizontal size={17}/> Edit</Button></div>
   <div className="stock-metrics">{FORMS.map(f=><Metric key={f} label={FORM_LABEL[f]} value={<>{formatAmount(herb.stock[f])} <span className="unit">{unitLabel(FORM_UNIT[f])}</span></>} meta={herb.thresholds[f]>0?`Reorder at ${formatAmount(herb.thresholds[f])}`:'No alert threshold'}/>)}</div>
   <div className="action-bar"><Button onClick={()=>setAdjust(true)}><Plus size={17}/> Adjust stock</Button><Button variant="secondary" onClick={()=>setBuy(true)}><ShoppingCart size={17}/> Receive purchase</Button><Button variant="secondary" onClick={()=>setExtract(true)}><FlaskConical size={17}/> Record extraction</Button></div>
-  <Tabs value={tab} onChange={setTab} options={[{id:'stock',label:'Overview'},{id:'recipes',label:`Recipes (${connections.length})`},{id:'history',label:'History'}]}/>
+  <Tabs value={tab} onChange={setTab} options={[{id:'stock',label:'Overview'},{id:'recipes',label:`Recipes (${connections.length})`},{id:'costs',label:'Costs'},{id:'history',label:'History'}]}/>
   {tab==='stock'&&<div className="two-columns">
    <Card title="Reorder thresholds">
     {FORMS.map(f=><RowItem key={f} title={FORM_LABEL[f]} detail={herb.thresholds[f]>0?`${formatAmount(herb.thresholds[f])} ${unitLabel(FORM_UNIT[f])} threshold`:'Not configured'} end={herb.thresholds[f]>0&&herb.stock[f]<=herb.thresholds[f]?<Badge tone="warning">Reorder</Badge>:<CheckCircle size={17} className="positive-icon"/>}/>)}
     <div className="card-footer"><Button variant="ghost" onClick={()=>setEditing(true)}>Edit thresholds</Button></div>
    </Card>
-   <Card title="Purchasing & supplier">
-    <RowItem title="Preferred vendor" end={db.vendors.find(v=>v.id===herb.preferredVendorId)?.name||'Not set'}/>
-    <RowItem title="Quoted cost / pound" end={herb.quotedPricePerLb==null?'Not set':`$${herb.quotedPricePerLb.toFixed(2)}`}/>
-    <RowItem title="Est. raw cost / oz" end={herb.quotedPricePerLb==null?'—':`$${(herb.quotedPricePerLb/16).toFixed(2)}`}/>
-    <RowItem title="Total receipts" end={`${purchases.length} purchases`}/>
-    <div className="card-footer"><Button variant="ghost" onClick={()=>setBuy(true)}>Receive stock <ArrowRight size={16}/></Button></div>
-   </Card>
+   <CostsSummary herb={herb} onMore={()=>setTab('costs')} onReceive={()=>setBuy(true)}/>
    <Card title="Latest activity">
     {moves.length?moves.slice(0,5).map(m=><RowItem key={m.id} title={m.reason} detail={new Date(m.at).toLocaleString()} end={`${m.delta>0?'+':''}${formatAmount(m.delta)} ${unitLabel(m.unit)}`}/>):<EmptyState title="No movements recorded" description="Inventory changes will appear here with amounts, timestamps and reasons."/>}
    </Card>
    <Card title="Herb notes"><p className="body-copy">{herb.notes||'No notes have been added to this herb yet.'}</p>{herb.aliases.length>0&&<p className="hint">Also known as: {herb.aliases.join(', ')}</p>}</Card>
   </div>}
+  {tab==='costs'&&<CostsPanel herb={herb}/>}
   {tab==='recipes'&&<Card title="Recipes using this herb">
    {connections.length?connections.map(r=>{const ing=r.ingredients.filter(i=>i.herbId===herb.id);return <RowItem key={r.id} title={r.name} detail={r.kind==='tea'?'Tea · dried herb':'Tincture · liquid extract'} end={`${formatAmount(ing.reduce((n,i)=>n+i.parts,0))} parts`}/>;}):<EmptyState title="No connected recipes" description="Adding a herb to a recipe automatically links it here."/>}
   </Card>}
@@ -76,7 +73,7 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
   </Modal>}
   {buy&&<Modal title="Receive purchase" onClose={()=>setBuy(false)} footer={<><Button variant="ghost" onClick={()=>setBuy(false)}>Cancel</Button><Button onClick={applyBuy}><ShoppingCart size={16}/> Receive stock</Button></>}>
    <Field label="Supplier name" value={pVendor} onChange={e=>setPVendor(e.target.value)} placeholder="Preferred supplier"/>
-   <SelectField label="Purchased form" value={pForm} onChange={e=>setPForm(e.target.value as 'dry'|'powder')}><option value="dry">Dried herb · oz weight</option><option value="powder">Powder · oz weight</option></SelectField>
+   <SelectField label="Purchased form" value={pForm} onChange={e=>{const selectedForm=e.target.value as 'dry'|'powder';setPForm(selectedForm);const q=latestPriceQuote(db,herb.id,selectedForm);setPPrice(q?String(q.pricePerLb):'');if(q)setPVendor(quoteVendor(db,q));}}><option value="dry">Dried herb · oz weight</option><option value="powder">Powder · oz weight</option></SelectField>
    <div className="form-grid"><Field label="Quantity (oz wt)" type="number" min="0" step="any" value={pQty} onChange={e=>setPQty(e.target.value)}/><Field label="Price per pound ($)" type="number" min="0" step="any" value={pPrice} onChange={e=>setPPrice(e.target.value)}/></div>
    <div className="form-grid"><Field label="Shipping / extra cost ($)" type="number" min="0" step="any" value={pShipping} onChange={e=>setPShipping(e.target.value)}/><Field label="Received date" type="date" value={pDate} onChange={e=>setPDate(e.target.value)}/></div>
    <p className="cost-preview">Total cost: <strong>{pPrice&&pQty&&pShipping!==''&&Number(pPrice)>=0&&Number(pQty)>0?`$${(Number(pQty)/16*Number(pPrice)+Number(pShipping)).toFixed(2)}`:'—'}</strong></p>
@@ -91,10 +88,9 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
    <Field label="Herb name" value={editName} onChange={e=>setEditName(e.target.value)}/>
    <Field label="Aliases (comma-separated)" value={aliases} onChange={e=>setAliases(e.target.value)}/>
    <SelectField label="Preferred supplier" value={vendorId} onChange={e=>setVendorId(e.target.value)}><option value="">No preferred supplier</option>{db.vendors.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</SelectField>
-   <Field label="Quoted price per pound ($)" type="number" min="0" step="any" value={quote} onChange={e=>setQuote(e.target.value)}/>
    <h3 className="subheading">Reorder thresholds</h3>
    {FORMS.map(f=><Field key={f} label={`${FORM_LABEL[f]} · ${unitLabel(FORM_UNIT[f])}`} type="number" min="0" step="any" value={thresholds[f]} onChange={e=>setThresholds(old=>({...old,[f]:Number(e.target.value)}))}/>)}
-   <p className="hint">Stock counts cannot be edited here; use a logged stock adjustment for quantity changes.</p>
+   <p className="hint">Use the Costs tab to record supplier quotes by herb form. Stock counts require a logged adjustment.</p>
   </Modal>}
  </div>;
 }

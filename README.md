@@ -27,6 +27,8 @@ The app is designed to replace loose spreadsheets, handwritten stock lists and r
 - Sign in using Firebase Authentication with Google.
 - Create multiple independent, named **private workspaces** under one Google account.
 - Save inventories in Cloud Firestore, using owner-only security rules and revision-checked writes.
+- Keep separate dried-herb and powder supplier quotes with supplier names, optional quote dates, and historical pricing distinct from actual purchase receipts.
+- Merge updated cost spreadsheets through a review-first importer without changing stock or replacing a workspace.
 - Export JSON backups and restore a versioned backup into a chosen workspace.
 - Use shared components, design tokens, responsive navigation, light/dark themes, and an installable PWA interface.
 
@@ -46,7 +48,7 @@ Follow **[Firebase setup](docs/FIREBASE_SETUP.md)** before entering business dat
 - **React + TypeScript + Vite**, with shared UI components and CSS tokens.
 - Firebase Google Authentication, Firestore owner-only workspaces and optimistic revision checks.
 - Domain functions manage stock math, purchase receipt, recipe scaling, batch production and packaging; UI components do not directly manipulate inventory balances.
-- **Whole-number releases** (v1, v2, v3). README stays descriptive; changes go in `CHANGELOG.md`.
+- **Whole-number releases** (v1, v2, v3, v4). README stays descriptive; changes go in `CHANGELOG.md`.
 - `docs/PROJECT_CONTEXT.md` is the authoritative conversation-handoff file. Update it whenever the scope, architecture or open decisions change.
 
 ## Security and current limitations

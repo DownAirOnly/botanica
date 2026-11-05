@@ -4,13 +4,42 @@ import { DB_VERSION, type BotanicaDB } from '../types';
 export function validateBackup(value:unknown):BotanicaDB {
   if(!value||typeof value!=='object')throw new Error('Not a Botanica backup.');
   const v=value as Partial<BotanicaDB>;
-  if((v.schemaVersion!==DB_VERSION&&v.schemaVersion!==1)||!Array.isArray(v.herbs)||!Array.isArray(v.recipes)||!Array.isArray(v.movements)||!Array.isArray(v.vendors)||!Array.isArray(v.purchases)||!Array.isArray(v.products)||!Array.isArray(v.batches)||!v.bulk||typeof v.bulk!=='object')throw new Error('Unsupported or incomplete Botanica backup.');
-  if(v.herbs.some(h=>!h||typeof h.id!=='string'||typeof h.name!=='string'||!h.stock||Object.values(h.stock).some(n=>typeof n!=='number'||!Number.isFinite(n)||n<0)))throw new Error('The backup contains invalid ingredient stock values.');
-  if(v.products.some(p=>!p||typeof p.id!=='string'||!Number.isInteger(p.count)||p.count<0))throw new Error('The backup contains invalid products.');
-  if(Object.values(v.bulk).some(n=>typeof n!=='number'||!Number.isFinite(n)||n<0))throw new Error('The backup contains invalid bulk stock values.');
-  if(v.schemaVersion===1)return {...v,items:[],schemaVersion:DB_VERSION,appVersion:2} as BotanicaDB;
-  if(!Array.isArray(v.items)||v.items.some(i=>!i||typeof i.name!=='string'||!Number.isFinite(i.quantity)||i.quantity<0||!Number.isFinite(i.threshold)||i.threshold<0))throw new Error('Invalid general inventory items.');
-  return v as BotanicaDB;
+  if(![1,2,DB_VERSION].includes(v.schemaVersion as number)||
+     !Array.isArray(v.herbs)||!Array.isArray(v.recipes)||!Array.isArray(v.movements)||
+     !Array.isArray(v.vendors)||!Array.isArray(v.purchases)||!Array.isArray(v.products)||
+     !Array.isArray(v.batches)||!v.bulk||typeof v.bulk!=='object')
+    throw new Error('Unsupported or incomplete Botanica backup.');
+  if(v.herbs.some(h=>!h||typeof h.id!=='string'||typeof h.name!=='string'||!h.stock||
+    Object.values(h.stock).some(n=>typeof n!=='number'||!Number.isFinite(n)||n<0)))
+    throw new Error('The backup contains invalid ingredient stock values.');
+  if(v.products.some(p=>!p||typeof p.id!=='string'||!Number.isInteger(p.count)||p.count<0))
+    throw new Error('The backup contains invalid products.');
+  if(Object.values(v.bulk).some(n=>typeof n!=='number'||!Number.isFinite(n)||n<0))
+    throw new Error('The backup contains invalid bulk stock values.');
+  if(v.schemaVersion!==1&&(!Array.isArray(v.items)||v.items.some(i=>!i||typeof i.name!=='string'||
+    !Number.isFinite(i.quantity)||i.quantity<0||!Number.isFinite(i.threshold)||i.threshold<0)))
+    throw new Error('Invalid general inventory items.');
+  if(v.schemaVersion===DB_VERSION){
+    if(!Array.isArray(v.priceQuotes)||v.priceQuotes.some(q=>!q||
+      typeof q.id!=='string'||typeof q.herbId!=='string'||typeof q.vendorId!=='string'||
+      !['dry','powder'].includes(q.form)||!Number.isFinite(q.pricePerLb)||q.pricePerLb<=0||
+      typeof q.recordedAt!=='string'||!['manual','workbook','purchase','legacy'].includes(q.source)))
+      throw new Error('Invalid supplier quote history.');
+    return v as BotanicaDB;
+  }
+  // Migrate v1/v2 backups without changing stock or erasing unknown source archives.
+  // Old quotedPricePerLb is an undated dry-herb price, NOT a purchase.
+  const quotes:BotanicaDB['priceQuotes']=[];
+  const vendors=v.vendors;
+  for(const h of v.herbs){
+    if(h.quotedPricePerLb!=null&&Number.isFinite(h.quotedPricePerLb)&&h.quotedPricePerLb>0&&
+       h.preferredVendorId&&vendors.some(x=>x.id===h.preferredVendorId)){
+      quotes.push({id:`legacy-${h.id}`,herbId:h.id,form:'dry',vendorId:h.preferredVendorId,
+        pricePerLb:h.quotedPricePerLb,recordedAt:new Date().toISOString(),source:'legacy'});
+    }
+  }
+  return {...v,items:v.schemaVersion===1?[]:v.items!,priceQuotes:quotes,
+    schemaVersion:DB_VERSION,appVersion:4} as BotanicaDB;
 }
 export function downloadJSON(db:BotanicaDB){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`botanica-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);}
 export async function importJSON(file:File){return validateBackup(JSON.parse(await file.text()));}

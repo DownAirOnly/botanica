@@ -1,5 +1,17 @@
 # Changelog
 
+## v4 — 2026-11-05 (purchasing and supplier costs)
+
+- Added supplier quote history for each dried herb and powder, with separate pricing by form.
+- Added optional quote dates and provenance for manual quotes, cost imports, purchases, and legacy pricing.
+- Added a Costs tab and shared pricing cards on herb profiles. A powder purchase no longer overwrites dried-herb pricing.
+- Added review-first `HERBS COST.xlsx` importing of Master Herb and Powders sheets, with exact name/alias matching, row selection, idempotence, and explicit unmatched/ambiguous/conflicting rows.
+- Cost imports merge quotes into the existing workspace without changing stock quantities, creating purchases, or replacing formulas.
+- Updated data schema from v2 to v3, keeping v1/v2 JSON restore support. Original private workbook contents are not committed to the public repository.
+- Preserved owner-only Firestore rules, revision-checked writes, and document-size protection. Live account and device import tests remain open.
+
+
+
 Botanica uses consecutive **whole-number release versions**. Product changes are documented here rather than accumulating in README.
 
 ## v3 — 2026-11-04 (repository deployment and Firebase wiring)
