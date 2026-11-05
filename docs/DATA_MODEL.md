@@ -41,3 +41,12 @@ The account-based shell stores independent workspaces. The Firestore path `works
 The app supports importing exported schema v1 JSON backups; migration adds the new general inventory array without changing herb units or stock levels. Older localStorage data is **not automatically copied into a Google account** to prevent accidental cross-account disclosure: users must select their desired workspace and explicitly restore a private backup.
 
 **Scaling roadmap:** the current single-document Firestore snapshot is intentionally an early foundation, with a 750 KB guard against the 1 MiB Firestore document limit. Future production storage should use separate item, movement, batch, recipe and product documents; server-side atomic updates, stronger audit protection, and optional scoped workspace memberships should follow together.
+
+## v4 supplier price history and schema migration
+
+- `BotanicaDB.schemaVersion` is 3 and adds a `priceQuotes` array; older v1/v2 JSON backup restores migrate automatically without changing counted quantities or deleting unknown archival metadata.
+- `PriceQuote` uses stable `herbId` and `vendorId`, and independent `dry` or `powder` price per pound. Every entry has `recordedAt` and source; `quotedOn` is optional and is omitted for undated source workbooks.
+- The latest quote per form is derived from quote history. Existing legacy dry-price/vendor fields are kept for compatibility, but must not be treated as a powder quote.
+- A price quote is not a purchase and does not add stock. Purchase receipt remains a separate inventory transaction; its actual paid price is clearly marked in the price history.
+- Cost-book imports merge selectable exact matches and do not create new herbs, guess supplier names, or silently replace other workspace data.
+- Source workbook recipes and ingredient quantities remain private; no source spreadsheet is published.
