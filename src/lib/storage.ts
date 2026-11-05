@@ -45,7 +45,7 @@ export function validateBackup(value:unknown):BotanicaDB {
     if(!Array.isArray(v.restockPlans)||!Array.isArray(v.restockReviews)||
       v.restockPlans.some(p=>!p||typeof p.id!=='string'||typeof p.herbId!=='string'||
         !['dry','powder'].includes(p.form)||!['weekly','biweekly','monthly','quarterly'].includes(p.cadence)||
-        !/^\\d{4}-\\d{2}-\\d{2}$/.test(p.nextReviewOn)||typeof p.active!=='boolean'||
+        !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(p.nextReviewOn)||typeof p.active!=='boolean'||
         (p.targetQuantityOz!==undefined&&(!Number.isFinite(p.targetQuantityOz)||p.targetQuantityOz<=0))||
         typeof p.createdAt!=='string'||typeof p.updatedAt!=='string')||
       v.restockReviews.some(r=>!r||typeof r.id!=='string'||typeof r.planId!=='string'||
@@ -62,7 +62,7 @@ export function validateBackup(value:unknown):BotanicaDB {
   }
   if(v.schemaVersion===3){
     return {...v,productionTasks:[],packagingSupplies:defaultPackagingSupplies(),
-      packagingReceipts:[],productionRuns:[],herbRestockNotes:[],schemaVersion:DB_VERSION,appVersion:7} as BotanicaDB;
+      packagingReceipts:[],productionRuns:[],herbRestockNotes:[],restockPlans:[],restockReviews:[],schemaVersion:DB_VERSION,appVersion:8} as BotanicaDB;
   }
   // Migrate v1/v2 backups without changing stock or erasing unknown source archives.
   // Old quotedPricePerLb is an undated dry-herb price, NOT a purchase.
