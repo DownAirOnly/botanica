@@ -129,8 +129,11 @@ export function makeFinishedProduct(db:BotanicaDB,productId:string,count:number,
     ingredients:preview.ingredients.map(i=>({herbId:i.herbId,form:i.form,amountOz:i.amountOz}))};
   return change({...db,
     herbs:source==='ingredients'?db.herbs.map(h=>{
-      const entry=preview.ingredients.find(i=>i.herbId===h.id);
-      return entry?{...h,stock:{...h.stock,[entry.form]:Math.max(0,h.stock[entry.form]-entry.amountOz)}}:h;
+      const entries=preview.ingredients.filter(i=>i.herbId===h.id);
+      if(!entries.length)return h;
+      const stock={...h.stock};
+      for(const entry of entries)stock[entry.form]=Math.max(0,stock[entry.form]-entry.amountOz);
+      return {...h,stock};
     }):db.herbs,
     bulk:source==='bulk'?{...db.bulk,[r.id]:Math.max(0,(db.bulk[r.id]||0)-preview.amountOz)}:db.bulk,
     packagingSupplies:db.packagingSupplies.map(x=>x.id===container.id?{...x,count:x.count-count}:x),
