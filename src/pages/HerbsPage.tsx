@@ -6,19 +6,20 @@ import {FORM_LABEL,FORM_UNIT,FORMS,formatAmount,makeId,unitLabel,zeroStock,zeroT
 import {useApp} from '../state/AppContext';
 import {CostsPanel,CostsSummary} from '../components/Pricing';
 import {latestPriceQuote,quoteVendor} from '../domain/pricing';
+import {isCountVerified} from '../domain/workflow';
 
-export function HerbsPage({selected,onSelect}:{selected:string|null;onSelect:(id:string|null)=>void}){
+export function HerbsPage({selected,onSelect,onOpenRestock}:{selected:string|null;onSelect:(id:string|null)=>void;onOpenRestock:()=>void}){
  const {db,setDB,notify,reportError}=useApp();const [query,setQuery]=useState('');const [filter,setFilter]=useState<'all'|'low'>('all');const [create,setCreate]=useState(false);const [name,setName]=useState('');
  const lowIds=new Set(lowStockItems(db).map(x=>x.herb.id));
  const filtered=useMemo(()=>db.herbs.filter(h=>(filter==='all'||lowIds.has(h.id))&&(h.name.toLowerCase().includes(query.toLowerCase())||h.aliases.some(a=>a.toLowerCase().includes(query.toLowerCase())))).sort((a,b)=>a.name.localeCompare(b.name)),[db.herbs,filter,query]);
  function add(){try {if(!name.trim())throw new Error('Enter an herb name.');if(db.herbs.some(h=>h.name.trim().toLowerCase()===name.trim().toLowerCase()))throw new Error('This herb already exists.');const h:Herb={id:makeId(),name:name.trim(),aliases:[],category:'herb',stock:zeroStock(),thresholds:zeroThresholds()};setDB(()=>saveHerb(db,h));notify('Herb created.');setCreate(false);setName('');onSelect(h.id);}catch(e){reportError(e);}}
  if(selected){const herb=db.herbs.find(x=>x.id===selected);if(herb)return <HerbDetail key={selected} herb={herb} onBack={()=>onSelect(null)}/>;}
  return <div className="content-stack">
-  <div className="page-heading"><div><h2>Ingredient catalog</h2><p>Search raw herbs, powders, prepared extracts, and supplier details.</p></div><Button onClick={()=>setCreate(true)}><Plus size={18}/> Add herb</Button></div>
+  <div className="page-heading"><div><h2>Ingredient catalog</h2><p>Search raw herbs, powders, prepared extracts, and supplier details.</p></div><div className="action-bar"><Button variant="secondary" onClick={onOpenRestock}>Check stock & restock</Button><Button onClick={()=>setCreate(true)}><Plus size={18}/> Add herb</Button></div></div>
   <div className="toolbar"><label className="search-field"><Search size={18}/><input aria-label="Search herbs" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search ingredients or aliases..."/></label><Tabs value={filter} onChange={v=>setFilter(v as 'all'|'low')} options={[{id:'all',label:'All herbs'},{id:'low',label:`Low stock (${lowIds.size})`}]}/></div>
   <Card className="list-card">
    {filtered.length?filtered.map(h=>{
-    const low=lowIds.has(h.id);const active=FORMS.filter(f=>h.stock[f]!==0);return <RowItem key={h.id} title={h.name} detail={active.length?active.map(f=>`${FORM_LABEL[f]} ${formatAmount(h.stock[f])} ${unitLabel(FORM_UNIT[f])}`).join(' · '):'No counted stock'} end={<span className="row-status">{low&&<Badge tone="warning">Low</Badge>}<ArrowRight size={17}/></span>} onClick={()=>onSelect(h.id)}/>;
+    const low=lowIds.has(h.id);const active=FORMS.filter(f=>h.stock[f]!==0||h.thresholds[f]>0);return <RowItem key={h.id} title={h.name} detail={active.length?active.map(f=>`${FORM_LABEL[f]} ${formatAmount(h.stock[f])} ${unitLabel(FORM_UNIT[f])}${isCountVerified(h,f)?'':' · not counted'}`).join(' · '):'Not counted · no active stock forms'} end={<span className="row-status">{low&&<Badge tone="warning">Low</Badge>}<ArrowRight size={17}/></span>} onClick={()=>onSelect(h.id)}/>;
    }):<EmptyState title="No matching herbs" description="Try a different search, import a workbook, or add a new ingredient."/>}
   </Card>
   {create&&<Modal title="New herb" onClose={()=>setCreate(false)} footer={<><Button variant="ghost" onClick={()=>setCreate(false)}>Cancel</Button><Button onClick={add}><Plus size={16}/> Create herb</Button></>}><Field label="Herb name" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Chamomile"/><p className="hint">New ingredients start with zero stock. Receive a purchase or record a verified count to add inventory.</p></Modal>}
@@ -41,12 +42,12 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
  function applyEdit(){try{const next=saveHerb(db,{...herb,name:editName.trim(),aliases:aliases.split(',').map(s=>s.trim()).filter(Boolean),thresholds,preferredVendorId:vendorId||undefined});setDB(()=>next);notify('Herb details updated.');setEditing(false);}catch(e){reportError(e);}}
  return <div className="content-stack">
   <div className="page-heading"><div><button className="back-link" onClick={onBack}><ArrowLeft size={16}/> All herbs</button><h2>{herb.name}</h2><p>Herb profile · stock, purchasing, and connected recipes</p></div><Button variant="secondary" onClick={()=>setEditing(true)}><SlidersHorizontal size={17}/> Edit</Button></div>
-  <div className="stock-metrics">{FORMS.map(f=><Metric key={f} label={FORM_LABEL[f]} value={<>{formatAmount(herb.stock[f])} <span className="unit">{unitLabel(FORM_UNIT[f])}</span></>} meta={herb.thresholds[f]>0?`Reorder at ${formatAmount(herb.thresholds[f])}`:'No alert threshold'}/>)}</div>
+  <div className="stock-metrics">{FORMS.map(f=><Metric key={f} label={FORM_LABEL[f]} value={<>{formatAmount(herb.stock[f])} <span className="unit">{unitLabel(FORM_UNIT[f])}</span></>} meta={!isCountVerified(herb,f)?'Physical count not verified':herb.thresholds[f]>0?`Reorder at ${formatAmount(herb.thresholds[f])}`:'Verified count · no alert threshold'}/>)}</div>
   <div className="action-bar"><Button onClick={()=>setAdjust(true)}><Plus size={17}/> Adjust stock</Button><Button variant="secondary" onClick={()=>setBuy(true)}><ShoppingCart size={17}/> Receive purchase</Button><Button variant="secondary" onClick={()=>setExtract(true)}><FlaskConical size={17}/> Record extraction</Button></div>
   <Tabs value={tab} onChange={setTab} options={[{id:'stock',label:'Overview'},{id:'recipes',label:`Recipes (${connections.length})`},{id:'costs',label:'Costs'},{id:'history',label:'History'}]}/>
   {tab==='stock'&&<div className="two-columns">
    <Card title="Reorder thresholds">
-    {FORMS.map(f=><RowItem key={f} title={FORM_LABEL[f]} detail={herb.thresholds[f]>0?`${formatAmount(herb.thresholds[f])} ${unitLabel(FORM_UNIT[f])} threshold`:'Not configured'} end={herb.thresholds[f]>0&&herb.stock[f]<=herb.thresholds[f]?<Badge tone="warning">Reorder</Badge>:<CheckCircle size={17} className="positive-icon"/>}/>)}
+    {FORMS.map(f=><RowItem key={f} title={FORM_LABEL[f]} detail={herb.thresholds[f]>0?`${formatAmount(herb.thresholds[f])} ${unitLabel(FORM_UNIT[f])} threshold`:'Not configured'} end={!isCountVerified(herb,f)?<Badge tone="neutral">Not counted</Badge>:herb.thresholds[f]>0&&herb.stock[f]<=herb.thresholds[f]?<Badge tone="warning">Reorder</Badge>:<CheckCircle size={17} className="positive-icon"/>}/>)}
     <div className="card-footer"><Button variant="ghost" onClick={()=>setEditing(true)}>Edit thresholds</Button></div>
    </Card>
    <CostsSummary herb={herb} onMore={()=>setTab('costs')} onReceive={()=>setBuy(true)}/>
@@ -69,7 +70,7 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
    <SelectField label="Adjustment type" value={mode} onChange={e=>setMode(e.target.value as 'add'|'use'|'set')}><option value="add">Add to stock</option><option value="use">Use / remove stock</option><option value="set">Set verified physical count</option></SelectField>
    <Field label={mode==='set'?'New verified quantity':'Amount'} type="number" min="0" step="any" value={qty} onChange={e=>setQty(e.target.value)}/>
    <Field label="Reason (required)" value={reason} onChange={e=>setReason(e.target.value)} placeholder="Count correction, spoiled material..."/>
-   <p className="hint">Current: {formatAmount(herb.stock[form])} {unitLabel(FORM_UNIT[form])}. Corrections retain before/after values in the movement ledger.</p>
+   <p className="hint">Current displayed: {formatAmount(herb.stock[form])} {unitLabel(FORM_UNIT[form])}. {mode==='set'?'Setting a measured physical count marks this form as verified.':'Receiving or changing an amount does not certify an unverified historical count.'} All corrections retain before/after values.</p>
   </Modal>}
   {buy&&<Modal title="Receive purchase" onClose={()=>setBuy(false)} footer={<><Button variant="ghost" onClick={()=>setBuy(false)}>Cancel</Button><Button onClick={applyBuy}><ShoppingCart size={16}/> Receive stock</Button></>}>
    <Field label="Supplier name" value={pVendor} onChange={e=>setPVendor(e.target.value)} placeholder="Preferred supplier"/>
