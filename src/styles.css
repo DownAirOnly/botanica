@@ -48,3 +48,22 @@
 .sync-pill{display:inline-flex;align-items:center;gap:6px;color:var(--ink-soft);background:var(--surface-2);padding:7px 10px;border-radius:18px;font-size:.72rem;font-weight:700;margin-left:auto;white-space:nowrap}
 .sync-pill+ .top-settings{margin-left:0}
 @media(max-width:760px){.gate-wrap{padding:18px}.gate-main{gap:14px}.sync-pill{font-size:.68rem;padding:6px}.sync-pill span{display:none}.bottom-nav-general{grid-template-columns:repeat(2,minmax(0,1fr))}.topbar{gap:8px}.topbar h1{font-size:1.4rem}}
+
+
+/* v4: shared purchasing/quote-history and review-first import UI */
+.pricing-value{font:700 1.85rem/1.2 var(--font-heading);letter-spacing:-.03em}
+.pricing-value small{font:600 .82rem var(--font);color:var(--muted);letter-spacing:normal}
+.cost-import-counts{display:flex;flex-wrap:wrap;gap:9px}
+.cost-import-counts span{flex:1;min-width:95px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:10px;font-size:.77rem;color:var(--ink-soft)}
+.cost-import-counts strong{display:block;color:var(--ink);font:700 1.35rem var(--font-heading)}
+.cost-review-list{max-height:44dvh;overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:12px}
+.cost-review-row{display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;border-bottom:1px solid var(--line);font-size:.79rem}
+.cost-review-row:last-child{border-bottom:0}.cost-review-row:hover{background:var(--surface-2)}
+.cost-review-row.not-ready{opacity:.74;cursor:default}
+.cost-review-row input[type='checkbox']{width:18px;height:18px;accent-color:var(--brand);flex-shrink:0}
+.cost-review-row>span:nth-child(2){display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.cost-review-row strong{font-size:.82rem;overflow-wrap:anywhere}
+.cost-review-row small{color:var(--muted);line-height:1.35}
+.cost-review-row .text-warning{color:var(--warn)}
+.cost-review-price{font-size:.79rem;font-weight:700;flex-shrink:0;color:var(--ink-soft)}
+@media(max-width:760px){.cost-review-row{padding:11px 9px;gap:8px}.cost-review-price{font-size:.72rem}.cost-review-list{max-height:42dvh}}
