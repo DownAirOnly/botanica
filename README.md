@@ -11,16 +11,16 @@ The app is designed to replace loose spreadsheets, handwritten stock lists and r
 The app uses three primary work areas instead of separate navigation tabs for each data type:
 
 - **Today:** prioritized actions, stock-count reviews, recorded bulk, production-in-progress, and one-tap shortcuts.
-- **Inventory:** contextual sections for check/restock, ingredients and supplier costs, and finished goods stock with SKU editing.
-- **Production:** contextual sections for ongoing tasks, editable recipes, measured batch creation, and packaging/bottling.
+- **Inventory:** contextual sections for check/restock, herbs and supplier costs, 15 packaging supply types with physical counts, and finished goods with formula/container assignment.
+- **Production:** contextual sections for ongoing tasks, editable recipes, measured batch creation, and one-step Make Product from prepared bulk or individual formula ingredients.
 
 
 - Keep separate quantities for dried herbs, powders and ready-made liquid extracts. Weight and volume are never silently treated as interchangeable.
 - Set reorder thresholds and quickly record stock additions, usage and corrected counts with an audit trail.
-- Save preferred vendors, supplier pricing by pound, and dated purchase records. Receiving a purchase adds to stock.
+- Save preferred vendors, supplier pricing by pound, and dated purchase records (with optional time). Receiving a purchase adds to stock. Historical restock notes can be recorded without changing stock, and current supplier source is an explicit user-confirmed annotation.
 - Link tincture/tea formulas to stable ingredient records. Scale recipes by parts and preview required ingredient amounts.
 - Record tincture extraction as measured input and liquid output, rather than guessing yield.
-- Record production batches; deduct ingredients and add bulk mixture. Package bulk mixture into finished product counts.
+- Record production batches; deduct ingredients and add bulk mixture. Make finished products from previously prepared bulk or measured individual formula ingredients while consuming assigned verified containers atomically.
 - Import the owner's existing workbook formats through a warning-and-review workflow. Unverified historical counts need confirmation.
 
 ### General inventory workspaces
@@ -55,7 +55,7 @@ Follow **[Firebase setup](docs/FIREBASE_SETUP.md)** before entering business dat
 - **React + TypeScript + Vite**, with shared UI components and CSS tokens.
 - Firebase Google Authentication, Firestore owner-only workspaces and optimistic revision checks.
 - Domain functions manage stock math, purchase receipt, recipe scaling, batch production and packaging; UI components do not directly manipulate inventory balances.
-- **Whole-number releases** (v1–v6). README stays descriptive; changes go in `CHANGELOG.md`.
+- **Whole-number releases** (v1–v7). README stays descriptive; changes go in `CHANGELOG.md`.
 - `docs/PROJECT_CONTEXT.md` is the authoritative conversation-handoff file. Update it whenever the scope, architecture or open decisions change.
 
 ## Security and current limitations
