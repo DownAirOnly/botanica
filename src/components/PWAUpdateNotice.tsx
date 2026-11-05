@@ -4,7 +4,7 @@ import {Button} from './UI';
 
 /** Explicit user-controlled PWA update prompt: never discard a half-entered form. */
 export function PWAUpdateNotice(){
-  const registrationRef=useRef<ServiceWorkerRegistration>();
+  const registrationRef=useRef<ServiceWorkerRegistration | undefined>(undefined);
   const {
     needRefresh:[needRefresh,setNeedRefresh],
     updateServiceWorker
