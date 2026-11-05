@@ -18,7 +18,7 @@ type SectionOption<Id extends string>={id:Id;title:string;description:string;Ico
 function WorkspaceSwitcher<Id extends string>({label,options,value,onChange}:{
   label:string;options:SectionOption<Id>[];value:Id;onChange:(next:Id)=>void
 }){
- return <nav className="workspace-switcher" aria-label={label}>
+ return <nav className={`workspace-switcher workspace-switcher-${options.length}`} aria-label={label}>
   {options.map(({id,title,description,Icon})=><button type="button" key={id}
     className={value===id?'workspace-switch active':'workspace-switch'}
     aria-current={value===id?'page':undefined} onClick={()=>onChange(id)}>
