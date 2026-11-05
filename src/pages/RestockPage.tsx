@@ -7,9 +7,9 @@ import {restockQueue,stockCountQueue} from '../domain/workflow';
 import {FORM_LABEL,FORM_UNIT,formatAmount,makeId,unitLabel,type Purchase,type StockForm} from '../types';
 import {useApp} from '../state/AppContext';
 
-export function RestockPage({onBack,onOpenHerb}:{onBack:()=>void;onOpenHerb:(id:string)=>void}){
+export function RestockPage({onBack,onOpenHerb,initialTab}:{onBack:()=>void;onOpenHerb:(id:string)=>void;initialTab:'verify'|'reorder'}){
  const {db,setDB,notify,reportError}=useApp();
- const [tab,setTab]=useState<'verify'|'reorder'>('verify');
+ const [tab,setTab]=useState<'verify'|'reorder'>(initialTab);
  const [query,setQuery]=useState('');
  const [countTarget,setCountTarget]=useState<{herbId:string;form:StockForm}|null>(null);
  const [countQty,setCountQty]=useState(''),[countReason,setCountReason]=useState('Physical count confirmed');
