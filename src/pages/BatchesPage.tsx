@@ -5,7 +5,7 @@ import {adjustBulkStock,calculateBatch,completeBatch,recipeLabel} from '../domai
 import {formatAmount,unitLabel,RECIPE_UNIT} from '../types';
 import {useApp} from '../state/AppContext';
 import {ProductionTasks} from '../components/ProductionTasks';
-export function BatchesPage({selectedRecipe,onOpenRestock}:{selectedRecipe:string|null;onOpenRestock:()=>void}){
+export function BatchesPage({selectedRecipe,onOpenRestock,showTasks=true}:{selectedRecipe:string|null;onOpenRestock:()=>void;showTasks?:boolean}){
  const {db,setDB,notify,reportError}=useApp();const [chosen,setChosen]=useState(selectedRecipe||''),[qty,setQty]=useState('16'),[notes,setNotes]=useState('');const [adjustId,setAdjustId]=useState<string|null>(null),[adjustMode,setAdjustMode]=useState<'add'|'use'|'set'>('set'),[adjustQty,setAdjustQty]=useState(''),[adjustReason,setAdjustReason]=useState('');
  const recipe=db.recipes.find(r=>r.id===chosen);
  const calc=recipe&&Number(qty)>0?(()=>{try{return calculateBatch(db,recipe,Number(qty));}catch{return []}})():[];
@@ -15,7 +15,7 @@ export function BatchesPage({selectedRecipe,onOpenRestock}:{selectedRecipe:strin
  function submit(){if(!recipe)return;try{const next=completeBatch(db,recipe.id,Number(qty),notes);setDB(()=>next);notify(`Recorded ${formatAmount(Number(qty))} ${unitLabel(RECIPE_UNIT[recipe.kind])} of ${recipe.name}.`);setNotes('');setQty('16');}catch(e){reportError(e);}}
  return <div className="content-stack">
   <div className="page-heading"><div><h2>Production</h2><p>Check ingredients, complete a batch, and add unbottled mixture stock.</p></div><Badge>Measured output</Badge></div>
-  <ProductionTasks selectedRecipe={selectedRecipe}/>
+  {showTasks&&<ProductionTasks selectedRecipe={selectedRecipe}/>}
   <div className="two-columns"><Card title="New production batch">
     <SelectField label="Choose a saved recipe" value={chosen} onChange={e=>setChosen(e.target.value)}><option value="">Select a formula...</option>{db.recipes.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</SelectField>
     {recipe&&<><p className="hint">{recipeLabel(recipe)}</p><Field label={`Amount to prepare (${unitLabel(RECIPE_UNIT[recipe.kind])})`} type="number" min="0" step="any" value={qty} onChange={e=>setQty(e.target.value)}/><Field label="Batch notes / reference" value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Optional lot reference, process notes..."/>
