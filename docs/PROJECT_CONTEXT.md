@@ -1,6 +1,6 @@
 # Botanica — project context / conversation handoff
 
-**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v5 (daily workflow, stock verification and production tasks; real-device testing pending)**.
+**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v6 (navigation/workspace rebuild; live mobile user testing pending)**.
 
 ## Mission
 
@@ -108,3 +108,14 @@ The user confirmed adding `downaironly.github.io` to Firebase Authentication's A
 - Recipes and batch/extraction deductions require verification before consuming inventory; UI calls out 'not counted' separately from true shortages.
 - Production tasks track planned, preparing, waiting, ready and done with optional target dates; stages are a user checklist and do **not** create/deduct stock. Recorded extraction, completed batches and packaging remain the only production-ledger adjustments.
 - The original workbook may have unverified stock, historic tincture-in-progress and mixed units; do not import these as confirmed current inventory, active production, or due dates automatically. Owner testing remains important before extending workflow to order management.
+
+## v6 — layout rebuild (2026-11-05)
+
+User wanted to reorganize the entire app intelligently without sacrificing working features, rather than keep bolting new sections onto a crowded bottom tab bar.
+
+- Primary herbal navigation is `Today → Inventory → Production`; Settings remains in the desktop sidebar and header gear. Generic workspaces keep their existing Home/Items layout.
+- Inventory workspace subviews: **Check & restock**, **Ingredients**, **Finished goods**. Includes the old count/restock flow, herb detail with supplier quote and history, plus all editable finished SKU and stock-count controls.
+- Production workspace subviews: **In progress**, **Recipes**, **Make a batch**, **Bottling**. A work-queue overview reuses the persistent production tasks and recorded bulk. Recipes retain ratio/edit/scaling workflows. Batches retain stock verification and ledger. Bottling reuses the product packer, but filters to formula-linked SKUs and shows available bulk first.
+- Today is redesigned as an action-first workbench with prioritized attention, four clickable status cards, active production, ready bulk, and shortcuts that directly open the appropriate internal work area. It avoids duplicate giant catalogs on Home.
+- The app preserves every previous data-backed workflow, the owner-only Firebase workspaces, all price quotes, JSON backup import/export, original XLSX importers, finished-good edit/count operations, recipe editor and records, original source-archive payload, and PWA update-notice handling.
+- This is intentionally *not* a data migration. The existing v5/DB schema v4 continues unchanged. No private workbook data are committed to the public repository.
