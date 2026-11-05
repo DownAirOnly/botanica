@@ -143,6 +143,7 @@ export function makeFinishedProduct(db:BotanicaDB,productId:string,count:number,
 export function recordHistoricalHerbRestock(db:BotanicaDB,note:Omit<HerbRestockNote,'id'>):BotanicaDB{
   if(!db.herbs.some(h=>h.id===note.herbId)||!['dry','powder'].includes(note.form)||
      !/^\d{4}-\d{2}-\d{2}$/.test(note.date)||
+     (note.time&&!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(note.time))||
      (note.vendorId&&!db.vendors.some(v=>v.id===note.vendorId)))
     throw new StockError('Choose an herb, a valid date, and a known supplier.');
   return change({...db,herbRestockNotes:[{...note,id:makeId()},...db.herbRestockNotes]});
