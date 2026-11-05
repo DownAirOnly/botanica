@@ -83,7 +83,10 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
        {totalCounts===0&&urgent===0&&<EmptyState title="No items flagged"
          description="The app will surface verified shortages, unfinished tasks and stock checks here."/>}
        <div className="card-footer"><Button variant="ghost" onClick={()=>onNavigate('inventory')}>
-         Open Inventory <ArrowRight size={16}/></Button></div>
+         Open Inventory <ArrowRight size={16}/></Button>
+         <Button variant="ghost" onClick={()=>onOpenRestock('schedule')}>
+           <CalendarClock size={16}/> Review schedules{dueReviews.length+pendingFollowups.length>0?' ('+(dueReviews.length+pendingFollowups.length)+' active)':''}
+         </Button></div>
      </Card>
      <div className="today-side-stack">
        <Card title="Production in progress" action={<Badge>{tasks.length} open</Badge>}>
