@@ -15,8 +15,10 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
  const bulk=Object.entries(db.bulk).filter(([,qty])=>qty>0);
  const today=localDate();
  const due=tasks.filter(t=>t.step==='ready'||(t.dueOn&&t.dueOn<=today));
- const totalCounts=unverified.length+productCounts.length;
- const urgent=needsRestock.length+due.length;
+ const containerCounts=db.packagingSupplies.filter(c=>!c.countCheckedAt);
+ const lowContainers=db.packagingSupplies.filter(c=>c.countCheckedAt&&c.threshold>0&&c.count<=c.threshold);
+ const totalCounts=unverified.length+productCounts.length+containerCounts.length;
+ const urgent=needsRestock.length+due.length+lowContainers.length;
  return <div className="today-page">
    <section className="today-hero">
      <div className="today-hero-copy"><span className="eyebrow">YOUR WORKBENCH</span>
@@ -31,7 +33,7 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
    <div className="today-stats">
      <button className="today-stat" onClick={()=>onOpenRestock('verify')}>
        <span><ClipboardCheck size={20}/><strong>{totalCounts}</strong></span>
-       <span>Counts to verify</span><small>Herbs and finished goods</small>
+       <span>Counts to verify</span><small>Herbs, containers and products</small>
      </button>
      <button className="today-stat" onClick={()=>onOpenRestock('reorder')}>
        <span><ShoppingCart size={20}/><strong>{needsRestock.length}</strong></span>
@@ -58,6 +60,12 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
        {unverified.slice(0,3).map(x=><RowItem key={x.herb.id+x.form} title={x.herb.name}
          detail={`${FORM_LABEL[x.form]} · physical count needed`}
          end={<Badge>Count</Badge>} onClick={()=>onOpenRestock('verify')}/>)}
+       {lowContainers.slice(0,2).map(c=><RowItem key={c.id} title={c.category+' · '+c.variant}
+         detail="Packaging supply at or below reorder threshold" end={<Badge tone="warning">Container</Badge>}
+         onClick={()=>onNavigate('inventory')}/>)}
+       {containerCounts.slice(0,2).map(c=><RowItem key={c.id} title={c.category+' · '+c.variant}
+         detail="Container stock · physical count needed" end={<Badge>Count</Badge>}
+         onClick={()=>onNavigate('inventory')}/>)}
        {productCounts.slice(0,2).map(p=><RowItem key={p.id} title={p.name}
          detail="Finished product · not counted" end={<Badge>Count</Badge>}
          onClick={()=>onNavigate('products')}/>)}
