@@ -6,7 +6,7 @@ import {useApp} from '../state/AppContext';
 import {formatAmount,unitLabel,RECIPE_UNIT,type MakeProductSource} from '../types';
 
 export function MakeProductPage({onEditProduct,onPackaging,selectedProductId}:{
- onEditProduct:()=>void;onPackaging:()=>void;selectedProductId:string|null;
+ onEditProduct:(productId:string)=>void;onPackaging:()=>void;selectedProductId:string|null;
 }){
  const {db,setDB,notify,reportError}=useApp();
  const [productId,setProductId]=useState(selectedProductId||''),[count,setCount]=useState('1');
@@ -61,7 +61,7 @@ export function MakeProductPage({onEditProduct,onPackaging,selectedProductId}:{
      <Card title="3 · Review inventory impact">
        {!productId?<EmptyState title="Choose a product" description="The app will calculate quantities and check supplies before allowing you to confirm."/>:
        error?<div className="content-stack"><div className="alert warning"><AlertCircle size={16}/>{error}</div>
-         <Button variant="secondary" onClick={onEditProduct}>Edit finished product <ArrowRight size={15}/></Button></div>:
+         <Button variant="secondary" onClick={()=>onEditProduct(productId)}>Edit finished product <ArrowRight size={15}/></Button></div>:
        preview&&<>
          <div className="make-product-summary">
            {source==='bulk'?<RowItem title={`Prepared ${recipe?.name||'bulk'}`}
