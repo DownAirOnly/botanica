@@ -30,6 +30,7 @@ export function saveHerb(db:BotanicaDB,h:Herb):BotanicaDB {
 }
 export function receivePurchase(db:BotanicaDB,p:Purchase):BotanicaDB {
   if(!okQuantity(p.quantityOz)||!Number.isFinite(p.pricePerLb)||p.pricePerLb<0||!Number.isFinite(p.shipping)||p.shipping<0)throw new StockError('Purchase quantity and price must be valid.');
+  if(!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(p.date)||(p.receivedTime&&!/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(p.receivedTime)))throw new StockError('Enter a valid receipt date and optional time.');
   if(!db.vendors.some(v=>v.id===p.vendorId))throw new StockError('Select a valid vendor.');
   const h=herbById(db,p.herbId),before=h.stock[p.form],after=before+p.quantityOz;
   const vendorName=db.vendors.find(v=>v.id===p.vendorId)!.name;
