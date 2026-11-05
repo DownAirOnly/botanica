@@ -54,7 +54,7 @@ export interface BotanicaDB {
   bulk: Record<string, number>; movements: StockMovement[];
   updatedAt: string;
 }
-export type PageId = 'home' | 'items' | 'herbs' | 'restock' | 'recipes' | 'batches' | 'products' | 'settings';
+export type PageId = 'home' | 'inventory' | 'production' | 'work' | 'bottling' | 'items' | 'herbs' | 'restock' | 'recipes' | 'batches' | 'products' | 'settings';
 export const FORMS: StockForm[] = ['dry', 'powder', 'extract'];
 export const FORM_LABEL: Record<StockForm, string> = {dry:'Dried herb',powder:'Powder',extract:'Tincture extract'};
 export const FORM_UNIT: Record<StockForm, 'oz_wt' | 'fl_oz'> = {dry:'oz_wt',powder:'oz_wt',extract:'fl_oz'};
