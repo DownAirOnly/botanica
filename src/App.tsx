@@ -4,7 +4,7 @@ import {HomePage} from './pages/HomePage';
 import {InventoryHub,ProductionHub,type InventorySection,type ProductionSection} from './components/WorkspaceHub';
 import {ItemsPage} from './pages/ItemsPage';
 import {SettingsPage} from './pages/SettingsPage';
-import {type PageId} from './types';
+import {type PageId,type RestockTab} from './types';
 
 export default function App(){
  const [page,setPage]=useState<PageId>('home');
@@ -14,7 +14,7 @@ export default function App(){
  const [batchRecipe,setBatchRecipe]=useState<string|null>(null);
  const [makingProduct,setMakingProduct]=useState<string|null>(null);
  const [editingProduct,setEditingProduct]=useState<string|null>(null);
- const [restockTab,setRestockTab]=useState<'verify'|'reorder'>('verify');
+ const [restockTab,setRestockTab]=useState<RestockTab>('verify');
  function go(target:PageId){
   // Legacy deep-link actions are routed into the appropriate work area.
   switch(target){
@@ -28,11 +28,12 @@ export default function App(){
    case 'inventory':setPage('inventory');return;
    case 'production':setPage('production');return;
    case 'work':setProductionSection('queue');setPage('production');return;
+   case 'history':setProductionSection('history');setPage('production');return;
    default:setPage(target);
   }
  }
  function openHerb(id:string){setHerb(id);setInventorySection('herbs');setPage('inventory');}
- function openRestock(tab:'verify'|'reorder'='verify'){
+ function openRestock(tab:RestockTab='verify'){
   setRestockTab(tab);setInventorySection('check');setPage('inventory');
  }
  function makeProduct(productId:string){setEditingProduct(null);setMakingProduct(productId);setProductionSection('bottle');setPage('production');}
