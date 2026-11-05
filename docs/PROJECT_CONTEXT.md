@@ -1,6 +1,6 @@
 # Botanica — project context / conversation handoff
 
-**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v7 (container stock and Make Product; mobile user testing pending)**.
+**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v8 (optional recurring restock reviews and production history; mobile user testing pending)**.
 
 ## Mission
 
@@ -131,3 +131,13 @@ User greenlit v7 from brother's feedback. Scope: last dry herb restock date, lis
 - Existing herb purchase records automatically supply last dated restock; optional dated historical restock notes have **no** inventory effect. Current dry/powder supplier is user-confirmed annotation only, not inferred from latest purchase nor claimed as exact remaining lot quantities.
 - Avoid automatically interpreting `MY HERBS.xlsx` source rows or older supplier names as exact current lots. No lot-level FIFO inventory has shipped. No private spreadsheets or formula content in public GitHub.
 - Future: recurring restock schedules and visual production-rate trends (v8). Salve formula-specific raw material deductions need explicit modeled formula/units and must not be guessed.
+
+## v8 — restock recurrence and history (2026-11-05)
+
+The user requested the next iteration after v7, following the brother's feedback about more consistent dry herb ordering and visual production/tincturing rates.
+
+- Inventory → Check & Restock now has a Schedule tab for weekly/biweekly/monthly/quarterly **review reminders**. Plans are opt-in; no auto-order or automatic receipt. User can add, edit, pause/resume, set supplier/reference quantity and mark a review completed. “Needs order / follow-up” decisions remain on Today until marked addressed; a completed review or addressed follow-up is **not** an actual order.
+- Today surfaces due schedule reviews and outstanding follow-ups, plus a current-month snapshot of recorded tincture batch volume and finished product units. It links directly to Production → History.
+- Production → History shows separately recorded tincture batch volume, extraction output, tea batch weight and finished unit counts, with recent and ranked events and weekly/monthly charts. Old product packaging movement is included only when it is not already represented by an attributed ProductionRun; user must not infer sales, actual demand, or complete older worksheet histories.
+- Schema v6 adds `restockPlans` and `restockReviews`; v5 backup migration and all legacy migrations initialize them empty and preserve all stock, recipes, packaging, suppliers and business history. New workspaces start at schema v6; no invented schedule/date or production row is backfilled.
+- Still deferred: outbound push alerts (PWA limitations and user permission required), automatic purchasing, exact lot-level depletion, sales trends without sale records, and owner-confirmed business cadence beyond review reminders.

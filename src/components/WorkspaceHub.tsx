@@ -9,12 +9,13 @@ import {RecipesPage} from '../pages/RecipesPage';
 import {ProductionTasks} from './ProductionTasks';
 import {PackagingPage} from '../pages/PackagingPage';
 import {MakeProductPage} from '../pages/MakeProductPage';
+import {ProductionHistoryPage} from '../pages/ProductionHistoryPage';
 import {stockCountQueue,restockQueue,productionQueue} from '../domain/workflow';
-import {formatAmount,RECIPE_UNIT,unitLabel} from '../types';
+import {formatAmount,RECIPE_UNIT,unitLabel,type RestockTab} from '../types';
 import {useApp} from '../state/AppContext';
 
 export type InventorySection='check'|'herbs'|'packaging'|'products';
-export type ProductionSection='queue'|'formulas'|'batch'|'bottle';
+export type ProductionSection='queue'|'formulas'|'batch'|'bottle'|'history';
 
 type SectionOption<Id extends string>={id:Id;title:string;description:string;Icon:LucideIcon};
 function WorkspaceSwitcher<Id extends string>({label,options,value,onChange}:{
@@ -40,11 +41,12 @@ const PRODUCTION_SECTIONS:SectionOption<ProductionSection>[]=[
  {id:'formulas',title:'Recipes',description:'Ingredients and ratios',Icon:BookOpen},
  {id:'batch',title:'Make a batch',description:'Record measured output',Icon:PackagePlus},
  {id:'bottle',title:'Make Product',description:'Mix or bottle finished stock',Icon:PackageCheck},
+ {id:'history',title:'History',description:'Rates and production records',Icon:BookOpen},
 ];
 export function InventoryHub({section,onSectionChange,restockTab,selectedHerb,onSelectHerb,onOpenRestock,onMakeProduct,editProductId}:{
  section:InventorySection;onSectionChange:(s:InventorySection)=>void;
- restockTab:'verify'|'reorder';selectedHerb:string|null;onSelectHerb:(id:string|null)=>void;
- onOpenRestock:(tab:'verify'|'reorder')=>void;onMakeProduct:(id:string)=>void;editProductId:string|null;
+ restockTab:RestockTab;selectedHerb:string|null;onSelectHerb:(id:string|null)=>void;
+ onOpenRestock:(tab:RestockTab)=>void;onMakeProduct:(id:string)=>void;editProductId:string|null;
 }){
  const {db}=useApp();const count=stockCountQueue(db).length+db.products.filter(p=>!p.countCheckedAt).length+db.packagingSupplies.filter(p=>!p.countCheckedAt).length;
  const reorder=restockQueue(db).length;
@@ -106,6 +108,7 @@ export function ProductionHub({section,onSectionChange,selectedRecipe,onMakeBatc
    {section==='batch'&&<BatchesPage key={selectedRecipe||'new'} selectedRecipe={selectedRecipe}
      showTasks={false} onOpenRestock={onOpenRestock}/>}
    {section==='bottle'&&<MakeProductPage key={selectedProductId||'new'} selectedProductId={selectedProductId} onEditProduct={onEditProduct} onPackaging={onPackaging}/>}
+   {section==='history'&&<ProductionHistoryPage/>}
   </div>
  </div>;
 }

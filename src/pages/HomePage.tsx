@@ -1,12 +1,14 @@
-import {ArrowRight,BookOpen,Boxes,ClipboardCheck,FlaskConical,Package,PackageCheck,ShoppingBasket,ShoppingCart} from 'lucide-react';
+import {ArrowRight,BookOpen,Boxes,CalendarClock,ClipboardCheck,FlaskConical,Package,PackageCheck,ShoppingBasket,ShoppingCart} from 'lucide-react';
 import {Badge,Button,Card,EmptyState,Metric,RowItem} from '../components/UI';
 import {restockQueue,stockCountQueue,productionQueue,localDate,productionStepLabels} from '../domain/workflow';
-import {FORM_LABEL,formatAmount,unitLabel,type PageId} from '../types';
+import {FORM_LABEL,formatAmount,unitLabel,type PageId,type RestockTab} from '../types';
+import {restockReviewQueue,pendingRestockFollowups} from '../domain/restockPlans';
+import {getProductionSummary} from '../domain/productionInsights';
 import {useAccount} from '../state/AccountContext';
 import {useApp} from '../state/AppContext';
 
 export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
- onNavigate:(p:PageId)=>void;onOpenHerb:(id:string)=>void;onOpenRestock:(tab:'verify'|'reorder')=>void;
+ onNavigate:(p:PageId)=>void;onOpenHerb:(id:string)=>void;onOpenRestock:(tab:RestockTab)=>void;
 }){
  const {db}=useApp();const {active}=useAccount();
  if(active?.kind==='general')return <GeneralHome onNavigate={onNavigate}/>;
@@ -15,10 +17,16 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
  const bulk=Object.entries(db.bulk).filter(([,qty])=>qty>0);
  const today=localDate();
  const due=tasks.filter(t=>t.step==='ready'||(t.dueOn&&t.dueOn<=today));
+ const dueReviews=restockReviewQueue(db,today).filter(x=>x.due);
+ const pendingFollowups=pendingRestockFollowups(db);
+ const finishedThisMonth=getProductionSummary(db,'finished','month',today);
+ const tincturesThisMonth=getProductionSummary(db,'tincture','month',today);
+ const madeNow=finishedThisMonth.bars[finishedThisMonth.bars.length-1].value;
+ const mixedNow=tincturesThisMonth.bars[tincturesThisMonth.bars.length-1].value;
  const containerCounts=db.packagingSupplies.filter(c=>!c.countCheckedAt);
  const lowContainers=db.packagingSupplies.filter(c=>c.countCheckedAt&&c.threshold>0&&c.count<=c.threshold);
  const totalCounts=unverified.length+productCounts.length+containerCounts.length;
- const urgent=needsRestock.length+due.length+lowContainers.length;
+ const urgent=needsRestock.length+due.length+lowContainers.length+dueReviews.length+pendingFollowups.length;
  return <div className="today-page">
    <section className="today-hero">
      <div className="today-hero-copy"><span className="eyebrow">YOUR WORKBENCH</span>
@@ -50,10 +58,13 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
    </div>
    <div className="today-main-grid">
      <Card className="today-action-card" title="Needs your attention"
-       action={<Badge tone={urgent?'warning':'neutral'}>{urgent} ready or low</Badge>}>
+       action={<Badge tone={urgent?'warning':'neutral'}>{urgent} to review</Badge>}>
        {due.slice(0,3).map(t=><RowItem key={t.id} title={t.name}
          detail={t.dueOn&&t.dueOn<=today?`Production target ${t.dueOn}`:productionStepLabels[t.step]}
          end={<Badge tone="warning">Production</Badge>} onClick={()=>onNavigate('work')}/>)}
+       {dueReviews.slice(0,3).map(({plan,herb})=><RowItem key={plan.id}
+         title={herb?.name||'Herb'} detail={'Scheduled restock review · '+plan.nextReviewOn}
+         end={<Badge tone="warning">Review</Badge>} onClick={()=>onOpenRestock('schedule')}/>)}
        {needsRestock.slice(0,3).map(x=><RowItem key={x.herb.id+x.form} title={x.herb.name}
          detail={`${FORM_LABEL[x.form]} · ${x.reason}`}
          end={<Badge tone="warning">Restock</Badge>} onClick={()=>onOpenHerb(x.herb.id)}/>)}
@@ -72,7 +83,10 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
        {totalCounts===0&&urgent===0&&<EmptyState title="No items flagged"
          description="The app will surface verified shortages, unfinished tasks and stock checks here."/>}
        <div className="card-footer"><Button variant="ghost" onClick={()=>onNavigate('inventory')}>
-         Open Inventory <ArrowRight size={16}/></Button></div>
+         Open Inventory <ArrowRight size={16}/></Button>
+         <Button variant="ghost" onClick={()=>onOpenRestock('schedule')}>
+           <CalendarClock size={16}/> Review schedules{dueReviews.length+pendingFollowups.length>0?' ('+(dueReviews.length+pendingFollowups.length)+' active)':''}
+         </Button></div>
      </Card>
      <div className="today-side-stack">
        <Card title="Production in progress" action={<Badge>{tasks.length} open</Badge>}>
@@ -80,8 +94,12 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
            detail={t.dueOn?`${productionStepLabels[t.step]} · ${t.dueOn}`:productionStepLabels[t.step]}
            end={<ArrowRight size={15}/>} onClick={()=>onNavigate('work')}/>):
            <EmptyState title="Nothing being tracked" description="Start a production task when you begin preparing something."/>}
+         <div className="today-production-pace"><strong>Recorded this month</strong>
+           <span>{formatAmount(mixedNow)} fl oz tincture batches · {formatAmount(madeNow)} finished units</span>
+         </div>
          <div className="card-footer"><Button variant="secondary" onClick={()=>onNavigate('work')}>
-           View production <ArrowRight size={15}/></Button></div>
+           View production <ArrowRight size={15}/></Button>
+           <Button variant="ghost" onClick={()=>onNavigate('history')}>View history <ArrowRight size={15}/></Button></div>
        </Card>
        <Card title="Unpackaged bulk">
          {bulk.length?bulk.slice(0,4).map(([id,amount])=>{

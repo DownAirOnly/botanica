@@ -38,11 +38,11 @@ export function SettingsPage(){
    <Card title="Data backups" action={<HardDrive size={19} className="muted-icon"/>}>
     <p className="body-copy">This workspace is stored in Firebase under your Google account. Export private JSON backups regularly. Restoring replaces this workspace in the cloud.</p>
     <div className="action-bar"><Button onClick={()=>downloadJSON(db)}><Download size={17}/> Export JSON backup</Button><label className="btn btn-secondary btn-md file-button"><Upload size={17}/> Restore JSON<input type="file" accept="application/json,.json" onChange={handleBackup} hidden/></label></div>
-    <div className="help-row"><ShieldCheck size={16}/> Backup includes herbs, formulas, prices, batches, movements, vendors, and product counts.</div>
+    <div className="help-row"><ShieldCheck size={16}/> Backup includes herbs, formulas, prices, batches, movements, containers, production history, review schedules, vendors, and product counts.</div>
    </Card>
    <Card title="Display & preferences">
     <SelectField label="Appearance" value={theme} onChange={e=>setTheme(e.target.value)}><option value="system">Follow device setting</option><option value="light">Light</option><option value="dark">Dark</option></SelectField>
-    <RowItem title="App version" end="v7"/><RowItem title="Data schema" end={`v${db.schemaVersion}`}/><RowItem title="Storage" end="Private Cloud Firestore"/><RowItem title="Sync" end={<Badge tone={syncStatus==='saved'?'success':'warning'}>{syncStatus==='saved'?'Saved':syncStatus==='saving'?'Syncing':'Needs attention'}</Badge>}/>
+    <RowItem title="App version" end="v8"/><RowItem title="Data schema" end={`v${db.schemaVersion}`}/><RowItem title="Storage" end="Private Cloud Firestore"/><RowItem title="Sync" end={<Badge tone={syncStatus==='saved'?'success':'warning'}>{syncStatus==='saved'?'Saved':syncStatus==='saving'?'Syncing':'Needs attention'}</Badge>}/>
    </Card>
   </div>
   {active?.kind==='herbal'&&<Card title="Import original spreadsheets" action={<FileSpreadsheet size={20} className="muted-icon"/>}>

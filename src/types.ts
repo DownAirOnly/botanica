@@ -1,5 +1,6 @@
-export const DB_VERSION = 5 as const;
+export const DB_VERSION = 6 as const;
 export type StockForm = 'dry' | 'powder' | 'extract';
+export type RestockTab = 'verify'|'reorder'|'schedule';
 export type FormulaKind = 'tincture' | 'tea';
 export type ItemKind = 'ingredient' | 'bulk' | 'product' | 'container' | 'generic';
 export type GeneralUnit = 'units' | 'g' | 'kg' | 'oz_wt' | 'lb' | 'ml' | 'fl_oz' | 'l';
@@ -56,6 +57,18 @@ export interface ProductionRun {
   count:number;packageOz:number;source:MakeProductSource;containerSupplyId:string;
   containerName:string;bulkUsedOz:number;ingredients:BatchIngredient[];
 }
+export type RestockCadence='weekly'|'biweekly'|'monthly'|'quarterly';
+export type RestockReviewResult='consider_order'|'no_order_needed';
+/** A calendar review schedule, never an automatic order or stock adjustment. */
+export interface HerbRestockPlan {
+  id:string;herbId:string;form:'dry'|'powder';cadence:RestockCadence;
+  nextReviewOn:string;anchorDay?:number;active:boolean;vendorId?:string;targetQuantityOz?:number;
+  notes?:string;createdAt:string;updatedAt:string;
+}
+export interface HerbRestockReview {
+  id:string;planId:string;herbId:string;form:'dry'|'powder';
+  reviewedOn:string;result:RestockReviewResult;notes?:string;resolvedOn?:string;
+}
 export type ProductionStep = 'planned'|'preparing'|'waiting'|'ready'|'done';
 /** A production checklist item; never changes quantities by itself. */
 export interface ProductionTask {
@@ -73,10 +86,11 @@ export interface BotanicaDB {
   recipes: Recipe[]; batches: Batch[]; products: Product[]; productionTasks: ProductionTask[];
   packagingSupplies:PackagingSupply[];packagingReceipts:PackagingReceipt[];
   productionRuns:ProductionRun[];herbRestockNotes:HerbRestockNote[];
+  restockPlans:HerbRestockPlan[];restockReviews:HerbRestockReview[];
   bulk: Record<string, number>; movements: StockMovement[];
   updatedAt: string;
 }
-export type PageId = 'home' | 'inventory' | 'production' | 'work' | 'bottling' | 'containers' | 'items' | 'herbs' | 'restock' | 'recipes' | 'batches' | 'products' | 'settings';
+export type PageId = 'home' | 'inventory' | 'production' | 'work' | 'history' | 'bottling' | 'containers' | 'items' | 'herbs' | 'restock' | 'recipes' | 'batches' | 'products' | 'settings';
 export const FORMS: StockForm[] = ['dry', 'powder', 'extract'];
 export const FORM_LABEL: Record<StockForm, string> = {dry:'Dried herb',powder:'Powder',extract:'Tincture extract'};
 export const FORM_UNIT: Record<StockForm, 'oz_wt' | 'fl_oz'> = {dry:'oz_wt',powder:'oz_wt',extract:'fl_oz'};
