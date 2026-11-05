@@ -1,3 +1,4 @@
+import {recordPriceQuote} from './pricing';
 import { FORM_UNIT, RECIPE_UNIT, makeId, type BotanicaDB, type FormulaKind, type Herb, type Purchase, type Recipe, type StockForm, type StockMovement, type Product } from '../types';
 
 export class StockError extends Error {}
@@ -27,7 +28,15 @@ export function receivePurchase(db:BotanicaDB,p:Purchase):BotanicaDB {
   if(!okQuantity(p.quantityOz)||!Number.isFinite(p.pricePerLb)||p.pricePerLb<0||!Number.isFinite(p.shipping)||p.shipping<0)throw new StockError('Purchase quantity and price must be valid.');
   if(!db.vendors.some(v=>v.id===p.vendorId))throw new StockError('Select a valid vendor.');
   const h=herbById(db,p.herbId),before=h.stock[p.form],after=before+p.quantityOz;
-  return updated({...db,purchases:[p,...db.purchases],herbs:db.herbs.map(x=>x.id===h.id?{...x,stock:{...x.stock,[p.form]:after},preferredVendorId:p.vendorId,quotedPricePerLb:p.pricePerLb}:x),movements:[movement('purchase','ingredient',h.id,before,after,FORM_UNIT[p.form],`Received from ${db.vendors.find(v=>v.id===p.vendorId)?.name||'supplier'}`,p.form,p.id),...db.movements]});
+  const vendorName=db.vendors.find(v=>v.id===p.vendorId)!.name;
+  const received=updated({...db,purchases:[p,...db.purchases],
+    herbs:db.herbs.map(x=>x.id===h.id?{...x,stock:{...x.stock,[p.form]:after}}:x),
+    movements:[movement('purchase','ingredient',h.id,before,after,FORM_UNIT[p.form],
+      `Received from ${vendorName}`,p.form,p.id),...db.movements]});
+  // A received purchase is a real paid unit price, recorded distinctly from supplier quotes.
+  // Purchasing powder must never overwrite the dried-herb price.
+  return p.pricePerLb>0?recordPriceQuote(received,{herbId:h.id,form:p.form,
+    vendorName,pricePerLb:p.pricePerLb,quotedOn:p.date,source:'purchase',notes:'Purchase receipt'}):received;
 }
 export function saveRecipe(db:BotanicaDB,r:Recipe):BotanicaDB {
   if(!r.name.trim()||!r.ingredients.length)throw new StockError('Recipe needs a name and at least one ingredient.');
