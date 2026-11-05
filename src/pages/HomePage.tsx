@@ -25,7 +25,7 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
      </div>
      <div className="today-hero-actions">
        <Button onClick={()=>onOpenRestock('verify')}><ClipboardCheck size={17}/> Check inventory</Button>
-       <Button variant="secondary" onClick={()=>onNavigate('production')}><FlaskConical size={17}/> Open production</Button>
+       <Button variant="secondary" onClick={()=>onNavigate('work')}><FlaskConical size={17}/> Open production</Button>
      </div>
    </section>
    <div className="today-stats">
@@ -37,7 +37,7 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
        <span><ShoppingCart size={20}/><strong>{needsRestock.length}</strong></span>
        <span>Need restocking</span><small>Confirmed shortages</small>
      </button>
-     <button className="today-stat" onClick={()=>onNavigate('production')}>
+     <button className="today-stat" onClick={()=>onNavigate('work')}>
        <span><FlaskConical size={20}/><strong>{tasks.length}</strong></span>
        <span>Active production</span><small>Work in progress</small>
      </button>
@@ -51,7 +51,7 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
        action={<Badge tone={urgent?'warning':'neutral'}>{urgent} ready or low</Badge>}>
        {due.slice(0,3).map(t=><RowItem key={t.id} title={t.name}
          detail={t.dueOn&&t.dueOn<=today?`Production target ${t.dueOn}`:productionStepLabels[t.step]}
-         end={<Badge tone="warning">Production</Badge>} onClick={()=>onNavigate('production')}/>)}
+         end={<Badge tone="warning">Production</Badge>} onClick={()=>onNavigate('work')}/>)}
        {needsRestock.slice(0,3).map(x=><RowItem key={x.herb.id+x.form} title={x.herb.name}
          detail={`${FORM_LABEL[x.form]} · ${x.reason}`}
          end={<Badge tone="warning">Restock</Badge>} onClick={()=>onOpenHerb(x.herb.id)}/>)}
@@ -70,9 +70,9 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
        <Card title="Production in progress" action={<Badge>{tasks.length} open</Badge>}>
          {tasks.length?tasks.slice(0,4).map(t=><RowItem key={t.id} title={t.name}
            detail={t.dueOn?`${productionStepLabels[t.step]} · ${t.dueOn}`:productionStepLabels[t.step]}
-           end={<ArrowRight size={15}/>} onClick={()=>onNavigate('production')}/>):
+           end={<ArrowRight size={15}/>} onClick={()=>onNavigate('work')}/>):
            <EmptyState title="Nothing being tracked" description="Start a production task when you begin preparing something."/>}
-         <div className="card-footer"><Button variant="secondary" onClick={()=>onNavigate('production')}>
+         <div className="card-footer"><Button variant="secondary" onClick={()=>onNavigate('work')}>
            View production <ArrowRight size={15}/></Button></div>
        </Card>
        <Card title="Ready to bottle">
