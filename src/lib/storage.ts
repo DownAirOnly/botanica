@@ -1,5 +1,4 @@
 import { DB_VERSION, type BotanicaDB } from '../types';
-import { demoDB } from '../data/demo';
 // The legacy local-only key is deliberately not read in the account-based application.
 // Import a v1 JSON backup through Settings if you have older data.
 export function validateBackup(value:unknown):BotanicaDB {
