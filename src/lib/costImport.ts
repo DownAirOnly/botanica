@@ -65,7 +65,7 @@ export async function previewCostWorkbook(file:File,db:BotanicaDB):Promise<CostI
   }
   // Duplicate source lines must not silently decide a winner.
   const seen=new Map<string,CostImportRow>();
-  for(const row of rows.filter(r=>r.status==='ready'&&r.herbId)){
+  for(const row of rows.filter(r=>r.herbId&&['ready','unchanged'].includes(r.status))){
     const key=`${row.herbId}:${row.form}`,prior=seen.get(key);
     if(!prior){seen.set(key,row);continue;}
     if(prior.pricePerLb===row.pricePerLb&&normalizeName(prior.vendorName)===normalizeName(row.vendorName)){
