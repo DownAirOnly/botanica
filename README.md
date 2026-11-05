@@ -8,6 +8,13 @@ The app is designed to replace loose spreadsheets, handwritten stock lists and r
 
 ### Herbal production workspaces
 
+The app uses three primary work areas instead of separate navigation tabs for each data type:
+
+- **Today:** prioritized actions, stock-count reviews, recorded bulk, production-in-progress, and one-tap shortcuts.
+- **Inventory:** contextual sections for check/restock, ingredients and supplier costs, and finished goods stock with SKU editing.
+- **Production:** contextual sections for ongoing tasks, editable recipes, measured batch creation, and packaging/bottling.
+
+
 - Keep separate quantities for dried herbs, powders and ready-made liquid extracts. Weight and volume are never silently treated as interchangeable.
 - Set reorder thresholds and quickly record stock additions, usage and corrected counts with an audit trail.
 - Save preferred vendors, supplier pricing by pound, and dated purchase records. Receiving a purchase adds to stock.
@@ -48,7 +55,7 @@ Follow **[Firebase setup](docs/FIREBASE_SETUP.md)** before entering business dat
 - **React + TypeScript + Vite**, with shared UI components and CSS tokens.
 - Firebase Google Authentication, Firestore owner-only workspaces and optimistic revision checks.
 - Domain functions manage stock math, purchase receipt, recipe scaling, batch production and packaging; UI components do not directly manipulate inventory balances.
-- **Whole-number releases** (v1, v2, v3, v4). README stays descriptive; changes go in `CHANGELOG.md`.
+- **Whole-number releases** (v1–v6). README stays descriptive; changes go in `CHANGELOG.md`.
 - `docs/PROJECT_CONTEXT.md` is the authoritative conversation-handoff file. Update it whenever the scope, architecture or open decisions change.
 
 ## Security and current limitations
