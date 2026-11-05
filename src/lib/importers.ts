@@ -1,6 +1,6 @@
 import {readSheet} from 'read-excel-file/browser';
 import {emptyDB} from '../data/demo';
-import {makeId,normalizeName,zeroStock,zeroThresholds,type BotanicaDB,type Herb,type Recipe,type RecipeIngredient,type Product,type FormulaKind,type StockForm} from '../types';
+import {makeId,normalizeName,zeroStock,zeroThresholds,type BotanicaDB,type Herb,type RecipeIngredient,type Product,type FormulaKind,type StockForm} from '../types';
 export type ImportKind = 'herbs'|'tinctures'|'teas'|'products';
 export interface ImportPreview {draft:BotanicaDB;kind:ImportKind;warnings:string[];herbsAdded:number;recipesAdded:number;productsAdded:number;replaceDemo:boolean;}
 type Rows=unknown[][];
