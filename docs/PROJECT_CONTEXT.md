@@ -1,6 +1,6 @@
 # Botanica — project context / conversation handoff
 
-**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v6 (navigation/workspace rebuild; live mobile user testing pending)**.
+**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v7 (container stock and Make Product; mobile user testing pending)**.
 
 ## Mission
 
@@ -119,3 +119,15 @@ User wanted to reorganize the entire app intelligently without sacrificing worki
 - Today is redesigned as an action-first workbench with prioritized attention, four clickable status cards, active production, ready bulk, and shortcuts that directly open the appropriate internal work area. It avoids duplicate giant catalogs on Home.
 - The app preserves every previous data-backed workflow, the owner-only Firebase workspaces, all price quotes, JSON backup import/export, original XLSX importers, finished-good edit/count operations, recipe editor and records, original source-archive payload, and PWA update-notice handling.
 - This is intentionally *not* a data migration. The existing v5/DB schema v4 continues unchanged. No private workbook data are committed to the public repository.
+
+## v7 — family feedback implementation (2026-11-05)
+
+User greenlit v7 from brother's feedback. Scope: last dry herb restock date, list of 15 containers, combined production from individual tincture ingredients or already mixed bulk, clearly distinguished current source from supplier preference, plus preserving all current data. Recurring ordering and production-rate charts are deferred to v8.
+
+- Inventory now includes a **Containers** subsection with 15 default entries: Amber bottles 2 oz, 4 oz, Elderberry, Sample; Spray bottles 2 oz, 4 oz; Salve tins Small, Big, Sample; Tea bags Small, Big, Essiac, Parasite; Plastic bottles Small, Big.
+- Old workspaces migrate to schema 5 automatically; quantities for these new containers are zero **unverified**. Do not infer old count data or auto-assign packaging to old finished products. Receipts and count corrections are explicitly separate actions.
+- Finished SKU editor has `containerSupplyId`; every one-step Make Product run requires a linked formula and container and physically verified inputs.
+- Production → Make Product handles two exclusive sources: (1) individual extracts or dry herbs from the formula; (2) previously measured and recorded bulk. Both consume assigned containers. All movements and a productionRun are created from a single preflight and immutable update. This prevents deducting inputs twice.
+- Existing herb purchase records automatically supply last dated restock; optional dated historical restock notes have **no** inventory effect. Current dry/powder supplier is user-confirmed annotation only, not inferred from latest purchase nor claimed as exact remaining lot quantities.
+- Avoid automatically interpreting `MY HERBS.xlsx` source rows or older supplier names as exact current lots. No lot-level FIFO inventory has shipped. No private spreadsheets or formula content in public GitHub.
+- Future: recurring restock schedules and visual production-rate trends (v8). Salve formula-specific raw material deductions need explicit modeled formula/units and must not be guessed.
