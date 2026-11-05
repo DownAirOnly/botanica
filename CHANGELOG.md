@@ -2,6 +2,8 @@
 
 ## v4 — 2026-11-05 (purchasing and supplier costs)
 
+- Deployment follow-up: added a visible, user-controlled PWA update notice, including checks when the app is brought back into focus. This fixes the previous silent waiting-update behavior without force-reloading unsaved forms.
+
 - Added supplier quote history for each dried herb and powder, with separate pricing by form.
 - Added optional quote dates and provenance for manual quotes, cost imports, purchases, and legacy pricing.
 - Added a Costs tab and shared pricing cards on herb profiles. A powder purchase no longer overwrites dried-herb pricing.

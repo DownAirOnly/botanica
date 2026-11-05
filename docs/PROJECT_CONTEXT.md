@@ -91,3 +91,10 @@ The user confirmed adding `downaironly.github.io` to Firebase Authentication's A
 - Shared UI components provide summary and detail quote history under each herb's Costs tab. Settings has a separate review-first cost importer. Existing security rules and Firestore size checks remain unchanged.
 - Do not assume workbook cost prices were quoted today. The workbook has no price-date column. Do not import `Tincture Mixes` as purchase receipts.
 - v3 deployment was confirmed by the user; no Firebase reconfiguration is needed. Continue testing Google auth, restore, preview, merge, sync, iOS/Android interactions on a real account before production.
+
+## PWA update visibility correction (v4 deployment follow-up)
+
+- Confirmed public GitHub Pages served a bundled JavaScript asset containing `Botanica v4` through a GitHub Actions remote fetch on 2026-11-05. A user still seeing v3 was therefore experiencing old client assets, likely controlled by an installed PWA service worker.
+- The old `registerType:'prompt'` service-worker configuration had no UI wired to the virtual registration hook, so updates could sit waiting invisibly.
+- Added `PWAUpdateNotice` at the application root using `useRegisterSW` and a visible Update now / Later prompt; focus and visibility changes request update checks. Keep user control because automatic mid-form reloads can lose input.
+- The initial v3-to-v4 transition may still require fully closing all app windows/tabs so the old waiting worker can activate. Do not ask users to erase website data until confirming cloud sync/backups.
