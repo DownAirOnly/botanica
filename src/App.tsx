@@ -13,14 +13,16 @@ export default function App(){
  const [page,setPage]=useState<PageId>('home');
  const [herb,setHerb]=useState<string|null>(null);
  const [batchRecipe,setBatchRecipe]=useState<string|null>(null);
+ const [restockTab,setRestockTab]=useState<'verify'|'reorder'>('verify');
  function go(p:PageId){setPage(p);if(p!=='herbs')setHerb(null);if(p!=='batches')setBatchRecipe(null);}
  function openHerb(id:string){setHerb(id);setPage('herbs');}
+ function openRestock(tab:'verify'|'reorder'='verify'){setRestockTab(tab);go('restock');}
  function makeBatch(recipeId:string){setBatchRecipe(recipeId);setPage('batches');}
  return <Shell page={page} onNavigate={go}>
-   {page==='home'&&<HomePage onNavigate={go} onOpenHerb={openHerb}/>}
+   {page==='home'&&<HomePage onNavigate={go} onOpenHerb={openHerb} onOpenRestock={openRestock}/>}
    {page==='items'&&<ItemsPage/>}
-   {page==='herbs'&&<HerbsPage selected={herb} onSelect={setHerb} onOpenRestock={()=>go('restock')}/>}
-   {page==='restock'&&<RestockPage onBack={()=>go('home')} onOpenHerb={openHerb}/>}
+   {page==='herbs'&&<HerbsPage selected={herb} onSelect={setHerb} onOpenRestock={()=>openRestock('verify')}/>}
+   {page==='restock'&&<RestockPage initialTab={restockTab} onBack={()=>go('home')} onOpenHerb={openHerb}/>}
    {page==='recipes'&&<RecipesPage onMakeBatch={makeBatch} onOpenRestock={()=>go('restock')}/>}
    {page==='batches'&&<BatchesPage key={batchRecipe||'fresh'} selectedRecipe={batchRecipe} onOpenRestock={()=>go('restock')}/>}
    {page==='products'&&<ProductsPage/>}
