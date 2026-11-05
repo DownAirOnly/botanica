@@ -1,6 +1,6 @@
 # Botanica — project context / conversation handoff
 
-**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v4 (purchasing and supplier pricing; live device verification pending)**.
+**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v5 (daily workflow, stock verification and production tasks; real-device testing pending)**.
 
 ## Mission
 
@@ -98,3 +98,13 @@ The user confirmed adding `downaironly.github.io` to Firebase Authentication's A
 - The old `registerType:'prompt'` service-worker configuration had no UI wired to the virtual registration hook, so updates could sit waiting invisibly.
 - Added `PWAUpdateNotice` at the application root using `useRegisterSW` and a visible Update now / Later prompt; focus and visibility changes request update checks. Keep user control because automatic mid-form reloads can lose input.
 - The initial v3-to-v4 transition may still require fully closing all app windows/tabs so the old waiting worker can activate. Do not ask users to erase website data until confirming cloud sync/backups.
+
+## v5 — daily workflow principles
+
+- User asked to move forward without a business-interview questionnaire; optimize around work categories already evidenced by original spreadsheets, but do not claim a fixed customer-order schedule, cure time or process sequence.
+- Herbal Home now shows action-oriented cards for unverified ingredient forms and finished product SKUs, confirmed replenishment, ongoing production tasks, and unpackaged bulk; navigation stays in five main mobile tabs, with Stock & Restocking as a Home/Herbs auxiliary page.
+- The v5 schema is `4`. Add `Herb.stockCheckedAt` by form, `Product.countCheckedAt`, and `BotanicaDB.productionTasks`. Missing count metadata means **unverified**, not zero. Existing historical numbers are untouched and never silently upgraded to measured physical counts. Physical 'set' adjustments mark a count verified; receipt or production changes alone do not.
+- `stockCountQueue` prioritizes forms used in active recipes, then imported nonzero forms, and only then other relevant forms; `restockQueue` includes only physically verified stocks under a threshold or verified zero in a used formula. Quotes are references, not actual purchase orders. No order quantity is guessed.
+- Recipes and batch/extraction deductions require verification before consuming inventory; UI calls out 'not counted' separately from true shortages.
+- Production tasks track planned, preparing, waiting, ready and done with optional target dates; stages are a user checklist and do **not** create/deduct stock. Recorded extraction, completed batches and packaging remain the only production-ledger adjustments.
+- The original workbook may have unverified stock, historic tincture-in-progress and mixed units; do not import these as confirmed current inventory, active production, or due dates automatically. Owner testing remains important before extending workflow to order management.
