@@ -4,7 +4,6 @@ import {
   type StockMovement,type HerbRestockNote
 } from '../types';
 import {calculateBatch,StockError} from './inventory';
-import {isCountVerified} from './workflow';
 import {packagingName} from '../data/packaging';
 
 const whole=(n:number)=>Number.isSafeInteger(n)&&n>0;
