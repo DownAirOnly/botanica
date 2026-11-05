@@ -1,6 +1,6 @@
 import {useState} from 'react';
-import {CalendarDays,ClipboardList,Plus} from 'lucide-react';
-import {Badge,Button,Card,EmptyState,Field,Modal,RowItem,SelectField} from './UI';
+import {CalendarDays,Plus} from 'lucide-react';
+import {Button,Card,EmptyState,Field,Modal,RowItem,SelectField} from './UI';
 import {advanceProductionTask,localDate,productionQueue,productionStepLabels,productionStepOrder,saveProductionTask} from '../domain/workflow';
 import {useApp} from '../state/AppContext';
 import type {ProductionStep,ProductionTask} from '../types';
