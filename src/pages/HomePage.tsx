@@ -6,7 +6,7 @@ import {FORM_LABEL,FORM_UNIT,formatAmount,unitLabel,type PageId} from '../types'
 import {useAccount} from '../state/AccountContext';
 import {useApp} from '../state/AppContext';
 
-export function HomePage({onNavigate,onOpenHerb}:{onNavigate:(p:PageId)=>void;onOpenHerb:(id:string)=>void}){
+export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{onNavigate:(p:PageId)=>void;onOpenHerb:(id:string)=>void;onOpenRestock:(tab:'verify'|'reorder')=>void}){
  const {db}=useApp();const {active}=useAccount();
  if(active?.kind==='general')return <GeneralHome onNavigate={onNavigate}/>;
  const counts=stockCountQueue(db),restock=restockQueue(db),tasks=productionQueue(db);
@@ -25,8 +25,8 @@ export function HomePage({onNavigate,onOpenHerb}:{onNavigate:(p:PageId)=>void;on
      <Metric label="Bulk ready to package" value={bulk.length} meta="Recorded bulk mixtures"/>
    </div>
    <div className="quick-grid">
-     <button onClick={()=>onNavigate('restock')}><ClipboardCheck size={20}/><strong>Check stock</strong><ArrowRight size={17}/></button>
-     <button onClick={()=>onNavigate('restock')}><ShoppingCart size={20}/><strong>Restock supplies</strong><ArrowRight size={17}/></button>
+     <button onClick={()=>onOpenRestock('verify')}><ClipboardCheck size={20}/><strong>Check stock</strong><ArrowRight size={17}/></button>
+     <button onClick={()=>onOpenRestock('reorder')}><ShoppingCart size={20}/><strong>Restock supplies</strong><ArrowRight size={17}/></button>
      <button onClick={()=>onNavigate('batches')}><FlaskConical size={20}/><strong>Track production</strong><ArrowRight size={17}/></button>
      <button onClick={()=>onNavigate('products')}><PackagePlus size={20}/><strong>Package products</strong><ArrowRight size={17}/></button>
    </div>
@@ -40,11 +40,11 @@ export function HomePage({onNavigate,onOpenHerb}:{onNavigate:(p:PageId)=>void;on
          end={<Badge tone="warning">Replenish</Badge>} onClick={()=>onOpenHerb(herb.id)}/>)}
        {counts.slice(0,4).map(({herb,form})=><RowItem key={herb.id+form}
          title={herb.name} detail={`${FORM_LABEL[form]} · no verified physical count`}
-         end={<Badge>Count</Badge>} onClick={()=>onNavigate('restock')}/>)}
+         end={<Badge>Count</Badge>} onClick={()=>onOpenRestock('verify')}/>)}
        {uncountedProducts.slice(0,2).map(p=><RowItem key={p.id} title={p.name} detail="Finished product · physical count not verified" end={<Badge>Count</Badge>} onClick={()=>onNavigate('products')}/>)}
        {!firstActions&&<EmptyState title="No flagged actions" description="Counts and thresholds determine restocking alerts. Add production tasks to track ongoing work."/>}
        {firstActions>0&&<div className="card-footer">
-         <Button variant="secondary" onClick={()=>onNavigate('restock')}>Verify ingredients <ArrowRight size={15}/></Button>
+         <Button variant="secondary" onClick={()=>onOpenRestock('verify')}>Verify ingredients <ArrowRight size={15}/></Button>
          {uncountedProducts.length>0&&<Button variant="ghost" onClick={()=>onNavigate('products')}>Verify finished goods <ArrowRight size={15}/></Button>}
        </div>}
      </Card>
@@ -72,9 +72,9 @@ export function HomePage({onNavigate,onOpenHerb}:{onNavigate:(p:PageId)=>void;on
          return <RowItem key={herb.id+form} title={herb.name}
            detail={`${FORM_LABEL[form]} · ${formatAmount(value)} ${unitLabel(FORM_UNIT[form])} counted${threshold>0?' · alert at '+formatAmount(threshold):''}`}
            end={quote?<span>{quoteVendor(db,quote)} · $${quote.pricePerLb.toFixed(2)}/lb</span>:'Quote unavailable'}
-           onClick={()=>onNavigate('restock')}/>;
+           onClick={()=>onOpenRestock('reorder')}/>;
        }):<EmptyState title="No confirmed restocking needs" description={counts.length?'Some ingredient quantities still need physical verification.':'Configure reorder thresholds on frequently used herbs.'}/>}
-       <div className="card-footer"><Button variant="ghost" onClick={()=>onNavigate('restock')}>Review restock list <ArrowRight size={15}/></Button></div>
+       <div className="card-footer"><Button variant="ghost" onClick={()=>onOpenRestock('reorder')}>Review restock list <ArrowRight size={15}/></Button></div>
      </Card>
      <Card title="Recent inventory activity" action={<Leaf size={18} className="muted-icon"/>}>
        {db.movements.length?db.movements.slice(0,6).map(m=><RowItem key={m.id} title={m.reason}
