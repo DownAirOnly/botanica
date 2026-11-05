@@ -1,4 +1,4 @@
-export const DB_VERSION = 2 as const;
+export const DB_VERSION = 3 as const;
 export type StockForm = 'dry' | 'powder' | 'extract';
 export type FormulaKind = 'tincture' | 'tea';
 export type ItemKind = 'ingredient' | 'bulk' | 'product' | 'generic';
@@ -19,6 +19,11 @@ export interface Herb {
   notes?: string;
 }
 export interface Vendor { id: string; name: string; website?: string; notes?: string; }
+export interface PriceQuote {
+  id:string; herbId:string; form:'dry'|'powder'; vendorId:string; pricePerLb:number;
+  quotedOn?:string; recordedAt:string; source:'manual'|'workbook'|'purchase'|'legacy';
+  sourceFile?:string; sourceRow?:number; notes?:string;
+}
 export interface Purchase {
   id: string; herbId: string; vendorId: string; form: 'dry' | 'powder';
   quantityOz: number; pricePerLb: number; shipping: number;
@@ -36,7 +41,7 @@ export interface StockMovement {
 }
 export interface BotanicaDB {
   schemaVersion: number; appVersion: number; mode: 'demo' | 'real';
-  herbs: Herb[]; items: GeneralItem[]; vendors: Vendor[]; purchases: Purchase[];
+  herbs: Herb[]; items: GeneralItem[]; vendors: Vendor[]; purchases: Purchase[]; priceQuotes: PriceQuote[];
   recipes: Recipe[]; batches: Batch[]; products: Product[];
   bulk: Record<string, number>; movements: StockMovement[];
   updatedAt: string;
