@@ -20,6 +20,7 @@ export default function App(){
    case 'herbs':setInventorySection('herbs');setPage('inventory');return;
    case 'restock':setInventorySection('check');setPage('inventory');return;
    case 'products':setInventorySection('products');setPage('inventory');return;
+   case 'containers':setInventorySection('packaging');setPage('inventory');return;
    case 'recipes':setProductionSection('formulas');setPage('production');return;
    case 'batches':setBatchRecipe(null);setProductionSection('batch');setPage('production');return;
    case 'bottling':setMakingProduct(null);setProductionSection('bottle');setPage('production');return;
