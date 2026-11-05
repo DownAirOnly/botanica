@@ -58,3 +58,13 @@ The app supports importing exported schema v1 JSON backups; migration adds the n
 - `ProductionTask` is a lightweight durable checklist with stages `planned`, `preparing`, `waiting`, `ready`, and `done`, and optional `dueOn`, `recipeId`, and `notes`. It does not perform stock movements. Future production scheduling must rely on actual owner-specified stages and durations.
 - Herbal Home derives lists from live data; new v5 restocking pages show only verified shortages, group by supplier quote when available and never make or place supplier orders automatically.
 - JSON backups from v1, v2, or v3 migrate to schema v4, keeping previous `priceQuotes`, purchases, movements and archival metadata. New schema records must have a `productionTasks` array.
+
+## v7 schema v5: packaging and connected making
+
+- `packagingSupplies` initializes 15 stable category+variant rows per workspace. `count=0` without `countCheckedAt` means **not counted**, not known empty. Physical `set` makes that count verified. Dated `packagingReceipts` add units but do not certify a previous opening balance.
+- `Product.containerSupplyId` is an optional link from a finished SKU to the single container used for each unit. Existing products remain unassigned until edited.
+- `ProductionRun` stores selected product, count, source (`bulk` or `ingredients`), container type, bulk amount, ingredient quantities and recorded time. All associated `StockMovement` records share the run ID; container movements use `kind='container'`.
+- `makeFinishedProduct` repeats all ingredient, available-bulk, unit and verified-container checks and applies a single immutable DB update. It **never** deducts both ingredients and bulk for the same run. Actual cloud writes remain protected by revision and document-size checks.
+- `herbRestockNotes` records historical date and optional supplier without modifying stock or inventing purchase prices. Displayed latest restock compares real purchases and historical notes.
+- `Herb.currentStockSource` records a user's explicit supplier-source annotation per dry/powder form. It is **not** lot-level inventory proof, cannot determine exact current quantities by supplier, and is cleared when a different vendor is received.
+- Pre-v5 backups migrate without inferring container assignments, stock counts, unknown herb sources, or any product run. Underlying Firestore workspace document remains single revisioned JSON with a 750KB guard.
