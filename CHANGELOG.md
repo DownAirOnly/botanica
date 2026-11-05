@@ -1,5 +1,18 @@
 # Changelog
 
+## v7 — 2026-11-05 (connected making and packaging supplies)
+
+- Seeded 15 named packaging types (amber bottles, spray bottles, salve tins, tea bags, plastic bottles), with zero opening stock **unverified**; existing business data and stock quantities are not changed.
+- Added Inventory → Containers for physical counting, dated receipts, preferred supplier notes, and reorder points.
+- Finished products can be linked to a specific container type; existing recipes, names, counts and packaging sizes are preserved.
+- Replaced the separate bottling-only UI with a guided **Make Product** flow in Production. Choose quantity and whether to use *already prepared bulk* or *individual formula ingredients*. A preview checks both contents and containers and confirms them as a **single linked run**. Prepared-bulk mode never deducts ingredients again.
+- Recorded production runs and ledger movements tie together container usage, ingredient/bulk deduction and finished goods additions. Existing historical packaging records remain intact.
+- Herb detail now shows last documented receipt/restock date by dry/powder form, allows dated historical notes without stock changes, and supports user-confirmed current-source labels distinct from preferred supplier or latest purchase.
+- Versioned backup schema moves from v4 to v5 (app v7) with non-destructive migration of v1–v4 cloud data and JSON backups. Original private workbooks remain private.
+- **Not yet included:** recurring reorder schedules, automatic purchases, quantitative lot-level supplier depletion, new salve-formula production logic, or production trend charts. These remain follow-up work.
+
+
+
 ## v6 — 2026-11-05 (workspace layout rebuild)
 
 - Rebuilt the app shell around three main work areas: **Today**, **Inventory**, and **Production**, while keeping Settings available from the header/sidebar.
