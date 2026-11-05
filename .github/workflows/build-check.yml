@@ -16,5 +16,22 @@ jobs:
           node-version: '22'
       - name: Install
         run: npm install --no-audit --no-fund
+      - name: Diagnose current public Pages version (informational)
+        shell: bash
+        run: |
+          set -e
+          curl -fsSL -H 'Cache-Control: no-cache' "https://downaironly.github.io/botanica/?build-probe=4" -o page.html
+          ASSET=$(grep -oE 'src="/botanica/assets/[^"]+\.js"' page.html | head -1 | cut -d'"' -f2)
+          echo "JavaScript entrypoint: ${ASSET:-NOT_FOUND}"
+          if [ -n "$ASSET" ]; then
+            curl -fsSL "https://downaironly.github.io${ASSET}" -o page.js
+            if grep -q 'Botanica v4' page.js; then
+              echo "PUBLIC_SITE_VERSION=v4"
+            elif grep -q 'Botanica v3' page.js; then
+              echo "PUBLIC_SITE_VERSION=v3"
+            else
+              echo "PUBLIC_SITE_VERSION=unknown"
+            fi
+          fi
       - name: TypeScript and Vite build
         run: npm run build
