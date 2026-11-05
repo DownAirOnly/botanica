@@ -7,11 +7,13 @@ import {ProductsPage} from '../pages/ProductsPage';
 import {BatchesPage} from '../pages/BatchesPage';
 import {RecipesPage} from '../pages/RecipesPage';
 import {ProductionTasks} from './ProductionTasks';
+import {PackagingPage} from '../pages/PackagingPage';
+import {MakeProductPage} from '../pages/MakeProductPage';
 import {stockCountQueue,restockQueue,productionQueue} from '../domain/workflow';
 import {formatAmount,RECIPE_UNIT,unitLabel} from '../types';
 import {useApp} from '../state/AppContext';
 
-export type InventorySection='check'|'herbs'|'products';
+export type InventorySection='check'|'herbs'|'packaging'|'products';
 export type ProductionSection='queue'|'formulas'|'batch'|'bottle';
 
 type SectionOption<Id extends string>={id:Id;title:string;description:string;Icon:LucideIcon};
@@ -30,20 +32,21 @@ function WorkspaceSwitcher<Id extends string>({label,options,value,onChange}:{
 const INVENTORY_SECTIONS:SectionOption<InventorySection>[]=[
  {id:'check',title:'Check & restock',description:'Counts and supplier needs',Icon:ClipboardCheck},
  {id:'herbs',title:'Ingredients',description:'Herbs, extracts and costs',Icon:Leaf},
+ {id:'packaging',title:'Containers',description:'Bottles, tins and tea bags',Icon:PackageCheck},
  {id:'products',title:'Finished goods',description:'Bottles, teas and stock',Icon:Package},
 ];
 const PRODUCTION_SECTIONS:SectionOption<ProductionSection>[]=[
  {id:'queue',title:'In progress',description:'Your current work',Icon:FlaskConical},
  {id:'formulas',title:'Recipes',description:'Ingredients and ratios',Icon:BookOpen},
  {id:'batch',title:'Make a batch',description:'Record measured output',Icon:PackagePlus},
- {id:'bottle',title:'Bottling',description:'Turn bulk into products',Icon:PackageCheck},
+ {id:'bottle',title:'Make Product',description:'Mix or bottle finished stock',Icon:PackageCheck},
 ];
-export function InventoryHub({section,onSectionChange,restockTab,selectedHerb,onSelectHerb,onOpenRestock}:{
+export function InventoryHub({section,onSectionChange,restockTab,selectedHerb,onSelectHerb,onOpenRestock,onMakeProduct,editProductId}:{
  section:InventorySection;onSectionChange:(s:InventorySection)=>void;
  restockTab:'verify'|'reorder';selectedHerb:string|null;onSelectHerb:(id:string|null)=>void;
- onOpenRestock:(tab:'verify'|'reorder')=>void;
+ onOpenRestock:(tab:'verify'|'reorder')=>void;onMakeProduct:(id:string)=>void;editProductId:string|null;
 }){
- const {db}=useApp();const count=stockCountQueue(db).length+db.products.filter(p=>!p.countCheckedAt).length;
+ const {db}=useApp();const count=stockCountQueue(db).length+db.products.filter(p=>!p.countCheckedAt).length+db.packagingSupplies.filter(p=>!p.countCheckedAt).length;
  const reorder=restockQueue(db).length;
  return <div className="workspace-hub">
   <div className="workspace-hub-top"><div><span className="eyebrow">STOCK & SUPPLIES</span>
@@ -56,13 +59,15 @@ export function InventoryHub({section,onSectionChange,restockTab,selectedHerb,on
      onBack={()=>onSectionChange('herbs')} onOpenHerb={id=>{onSelectHerb(id);onSectionChange('herbs');}}/>}
    {section==='herbs'&&<HerbsPage selected={selectedHerb} onSelect={onSelectHerb}
      onOpenRestock={()=>onOpenRestock('verify')}/>}
-   {section==='products'&&<ProductsPage mode="inventory"/>}
+   {section==='packaging'&&<PackagingPage/>}
+   {section==='products'&&<ProductsPage onMakeProduct={onMakeProduct} initialEditProductId={editProductId}/>}
   </div>
  </div>;
 }
-export function ProductionHub({section,onSectionChange,selectedRecipe,onMakeBatch,onOpenRestock}:{
+export function ProductionHub({section,onSectionChange,selectedRecipe,onMakeBatch,onOpenRestock,selectedProductId,onEditProduct,onPackaging}:{
  section:ProductionSection;onSectionChange:(s:ProductionSection)=>void;
  selectedRecipe:string|null;onMakeBatch:(id:string)=>void;onOpenRestock:()=>void;
+ selectedProductId:string|null;onEditProduct:(productId:string)=>void;onPackaging:()=>void;
 }){
  const {db}=useApp();const tasks=productionQueue(db);
  const bulk=Object.entries(db.bulk).filter(([,amount])=>amount>0);
@@ -100,7 +105,7 @@ export function ProductionHub({section,onSectionChange,selectedRecipe,onMakeBatc
    {section==='formulas'&&<RecipesPage onMakeBatch={onMakeBatch} onOpenRestock={onOpenRestock}/>}
    {section==='batch'&&<BatchesPage key={selectedRecipe||'new'} selectedRecipe={selectedRecipe}
      showTasks={false} onOpenRestock={onOpenRestock}/>}
-   {section==='bottle'&&<ProductsPage mode="packaging"/>}
+   {section==='bottle'&&<MakeProductPage key={selectedProductId||'new'} selectedProductId={selectedProductId} onEditProduct={onEditProduct} onPackaging={onPackaging}/>}
   </div>
  </div>;
 }

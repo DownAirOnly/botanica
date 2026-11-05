@@ -14,7 +14,7 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
  const [countTarget,setCountTarget]=useState<{herbId:string;form:StockForm}|null>(null);
  const [countQty,setCountQty]=useState(''),[countReason,setCountReason]=useState('Physical count confirmed');
  const [receiveTarget,setReceiveTarget]=useState<{herbId:string;form:'dry'|'powder'}|null>(null);
- const [supplier,setSupplier]=useState(''),[quantity,setQuantity]=useState('16'),[price,setPrice]=useState(''),[shipping,setShipping]=useState('0'),[date,setDate]=useState(new Date().toISOString().slice(0,10));
+ const [supplier,setSupplier]=useState(''),[quantity,setQuantity]=useState('16'),[price,setPrice]=useState(''),[shipping,setShipping]=useState('0'),[date,setDate]=useState(new Date().toISOString().slice(0,10)),[time,setTime]=useState('');
  const unchecked=stockCountQueue(db),restock=restockQueue(db);
  const matches=(name:string)=>name.toLowerCase().includes(query.trim().toLowerCase());
  const visibleUnchecked=unchecked.filter(x=>matches(x.herb.name));
@@ -35,7 +35,7 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
    const herb=db.herbs.find(h=>h.id===herbId);if(!herb)return;
    const q=latestPriceQuote(db,herbId,form);
    setReceiveTarget({herbId,form});setSupplier(q?quoteVendor(db,q):'');
-   setPrice(q?String(q.pricePerLb):'');setQuantity('16');setShipping('0');setDate(new Date().toISOString().slice(0,10));
+   setPrice(q?String(q.pricePerLb):'');setQuantity('16');setShipping('0');setDate(new Date().toISOString().slice(0,10));setTime('');
  }
  function applyReceipt(){
    if(!receiveTarget)return;
@@ -44,7 +44,7 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
      if(!quantity.trim()||!price.trim()||!shipping.trim()||!date)throw new Error('Complete the purchase details.');
      const vendor=ensureVendor(db,supplier);
      const p:Purchase={id:makeId(),herbId:receiveTarget.herbId,vendorId:vendor.id,
-       form:receiveTarget.form,quantityOz:Number(quantity),pricePerLb:Number(price),shipping:Number(shipping),date};
+       form:receiveTarget.form,quantityOz:Number(quantity),pricePerLb:Number(price),shipping:Number(shipping),date,receivedTime:time||undefined};
      const next=receivePurchase(vendor.db,p);setDB(()=>next);notify('Received purchase recorded; stock increased.');setReceiveTarget(null);
    }catch(e){reportError(e);}
  }
@@ -110,6 +110,7 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
        <Field label="Actual price / lb ($)" type="number" step="any" min="0" value={price} onChange={e=>setPrice(e.target.value)}/></div>
      <div className="form-grid"><Field label="Shipping ($)" type="number" step="any" min="0" value={shipping} onChange={e=>setShipping(e.target.value)}/>
        <Field label="Received on" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
+       <Field label="Received time (optional)" type="time" value={time} onChange={e=>setTime(e.target.value)}/>
    </Modal>}
  </div>;
 }

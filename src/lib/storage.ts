@@ -1,10 +1,11 @@
 import { DB_VERSION, type BotanicaDB } from '../types';
+import {defaultPackagingSupplies} from '../data/packaging';
 // The legacy local-only key is deliberately not read in the account-based application.
 // Import a v1 JSON backup through Settings if you have older data.
 export function validateBackup(value:unknown):BotanicaDB {
   if(!value||typeof value!=='object')throw new Error('Not a Botanica backup.');
   const v=value as Partial<BotanicaDB>;
-  if(![1,2,3,DB_VERSION].includes(v.schemaVersion as number)||
+  if(![1,2,3,4,DB_VERSION].includes(v.schemaVersion as number)||
      !Array.isArray(v.herbs)||!Array.isArray(v.recipes)||!Array.isArray(v.movements)||
      !Array.isArray(v.vendors)||!Array.isArray(v.purchases)||!Array.isArray(v.products)||
      !Array.isArray(v.batches)||!v.bulk||typeof v.bulk!=='object')
@@ -26,15 +27,28 @@ export function validateBackup(value:unknown):BotanicaDB {
       typeof q.recordedAt!=='string'||!['manual','workbook','purchase','legacy'].includes(q.source)))
       throw new Error('Invalid supplier quote history.');
   }
-  if(v.schemaVersion===DB_VERSION){
+  if((v.schemaVersion as number)>=4){
     if(!Array.isArray(v.productionTasks)||v.productionTasks.some(t=>!t||typeof t.id!=='string'||
       typeof t.name!=='string'||!['planned','preparing','waiting','ready','done'].includes(t.step)||
       typeof t.createdAt!=='string'||typeof t.updatedAt!=='string'))
       throw new Error('Invalid production task records.');
+  }
+  if(v.schemaVersion===DB_VERSION){
+    if(!Array.isArray(v.packagingSupplies)||!Array.isArray(v.packagingReceipts)||
+       !Array.isArray(v.productionRuns)||!Array.isArray(v.herbRestockNotes)||
+       v.packagingSupplies.some(p=>!p||typeof p.id!=='string'||typeof p.variant!=='string'||
+         !Number.isInteger(p.count)||p.count<0||!Number.isInteger(p.threshold)||p.threshold<0)||
+       v.productionRuns.some(r=>!r||typeof r.id!=='string'||!Number.isInteger(r.count)||r.count<=0))
+      throw new Error('Invalid packaging supply or production records.');
     return v as BotanicaDB;
   }
+  if(v.schemaVersion===4){
+    return {...v,packagingSupplies:defaultPackagingSupplies(),packagingReceipts:[],
+      productionRuns:[],herbRestockNotes:[],schemaVersion:DB_VERSION,appVersion:7} as BotanicaDB;
+  }
   if(v.schemaVersion===3){
-    return {...v,productionTasks:[],schemaVersion:DB_VERSION,appVersion:5} as BotanicaDB;
+    return {...v,productionTasks:[],packagingSupplies:defaultPackagingSupplies(),
+      packagingReceipts:[],productionRuns:[],herbRestockNotes:[],schemaVersion:DB_VERSION,appVersion:7} as BotanicaDB;
   }
   // Migrate v1/v2 backups without changing stock or erasing unknown source archives.
   // Old quotedPricePerLb is an undated dry-herb price, NOT a purchase.
@@ -48,7 +62,8 @@ export function validateBackup(value:unknown):BotanicaDB {
     }
   }
   return {...v,items:v.schemaVersion===1?[]:v.items!,priceQuotes:quotes,productionTasks:[],
-    schemaVersion:DB_VERSION,appVersion:5} as BotanicaDB;
+    packagingSupplies:defaultPackagingSupplies(),packagingReceipts:[],productionRuns:[],herbRestockNotes:[],
+    schemaVersion:DB_VERSION,appVersion:7} as BotanicaDB;
 }
 export function downloadJSON(db:BotanicaDB){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`botanica-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);}
 export async function importJSON(file:File){return validateBackup(JSON.parse(await file.text()));}

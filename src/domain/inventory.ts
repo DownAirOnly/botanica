@@ -30,11 +30,14 @@ export function saveHerb(db:BotanicaDB,h:Herb):BotanicaDB {
 }
 export function receivePurchase(db:BotanicaDB,p:Purchase):BotanicaDB {
   if(!okQuantity(p.quantityOz)||!Number.isFinite(p.pricePerLb)||p.pricePerLb<0||!Number.isFinite(p.shipping)||p.shipping<0)throw new StockError('Purchase quantity and price must be valid.');
+  if(!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(p.date)||(p.receivedTime&&!/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(p.receivedTime)))throw new StockError('Enter a valid receipt date and optional time.');
   if(!db.vendors.some(v=>v.id===p.vendorId))throw new StockError('Select a valid vendor.');
   const h=herbById(db,p.herbId),before=h.stock[p.form],after=before+p.quantityOz;
   const vendorName=db.vendors.find(v=>v.id===p.vendorId)!.name;
   const received=updated({...db,purchases:[p,...db.purchases],
-    herbs:db.herbs.map(x=>x.id===h.id?{...x,stock:{...x.stock,[p.form]:after}}:x),
+    herbs:db.herbs.map(x=>x.id===h.id?{...x,stock:{...x.stock,[p.form]:after},
+      currentStockSource:x.currentStockSource?.[p.form]&&x.currentStockSource[p.form]?.vendorId!==p.vendorId
+        ?{...x.currentStockSource,[p.form]:undefined}:x.currentStockSource}:x),
     movements:[movement('purchase','ingredient',h.id,before,after,FORM_UNIT[p.form],
       `Received from ${vendorName}`,p.form,p.id),...db.movements]});
   // A received purchase is a real paid unit price, recorded distinctly from supplier quotes.
@@ -77,6 +80,7 @@ export function completeBatch(db:BotanicaDB,recipeId:string,totalOz:number,notes
 export function saveProduct(db:BotanicaDB,p:Product):BotanicaDB {
   if(!p.name.trim()||!okQuantity(p.packageOz)||p.count<0||!Number.isInteger(p.count))throw new StockError('Enter a product name, valid package size, and nonnegative whole count.');
   if(p.recipeId&&!db.recipes.some(r=>r.id===p.recipeId))throw new StockError('Linked recipe not found.');
+  if(p.containerSupplyId&&!db.packagingSupplies.some(x=>x.id===p.containerSupplyId))throw new StockError('Choose an existing container type.');
   const existing=db.products.find(x=>x.id===p.id);
   const count=existing?.count ?? p.count;
   return updated({...db,products:existing?db.products.map(x=>x.id===p.id?{...p,count}:x):[...db.products,p]});

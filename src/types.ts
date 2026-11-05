@@ -1,7 +1,7 @@
-export const DB_VERSION = 4 as const;
+export const DB_VERSION = 5 as const;
 export type StockForm = 'dry' | 'powder' | 'extract';
 export type FormulaKind = 'tincture' | 'tea';
-export type ItemKind = 'ingredient' | 'bulk' | 'product' | 'generic';
+export type ItemKind = 'ingredient' | 'bulk' | 'product' | 'container' | 'generic';
 export type GeneralUnit = 'units' | 'g' | 'kg' | 'oz_wt' | 'lb' | 'ml' | 'fl_oz' | 'l';
 export interface GeneralItem {id:string;name:string;category:string;sku:string;unit:GeneralUnit;quantity:number;threshold:number;unitCost?:number;vendor?:string;notes?:string;}
 export type MovementAction = 'adjustment' | 'purchase' | 'batch' | 'packaging' | 'extraction';
@@ -16,6 +16,8 @@ export interface Herb {
   thresholds: StockThresholds;
   /** Confirmed physical count by form. Missing means amount is unverified, not zero. */
   stockCheckedAt?: Partial<Record<StockForm,string>>;
+  /** A user-confirmed source note, not an inferred FIFO lot balance. */
+  currentStockSource?: Partial<Record<'dry'|'powder',{vendorId:string;notedAt:string;notes?:string}>>;
   preferredVendorId?: string;
   quotedPricePerLb?: number;
   notes?: string;
@@ -29,13 +31,31 @@ export interface PriceQuote {
 export interface Purchase {
   id: string; herbId: string; vendorId: string; form: 'dry' | 'powder';
   quantityOz: number; pricePerLb: number; shipping: number;
-  date: string; notes?: string;
+  date: string; receivedTime?:string; notes?: string;
 }
 export interface RecipeIngredient { herbId: string; form: StockForm; parts: number; }
 export interface Recipe { id: string; name: string; kind: FormulaKind; ingredients: RecipeIngredient[]; notes?: string; active: boolean; }
 export interface BatchIngredient { herbId: string; form: StockForm; amountOz: number; }
 export interface Batch { id: string; recipeId: string; recipeName: string; amountOz: number; unit: 'oz_wt' | 'fl_oz'; ingredients: BatchIngredient[]; date: string; notes?: string; }
-export interface Product { id: string; name: string; recipeId?: string; kind: FormulaKind | 'salve' | 'spray' | 'other'; packageOz: number; count: number; countCheckedAt?:string; notes?: string; }
+export interface Product { id: string; name: string; recipeId?: string; containerSupplyId?: string; kind: FormulaKind | 'salve' | 'spray' | 'other'; packageOz: number; count: number; countCheckedAt?:string; notes?: string; }
+export type PackagingCategory='Amber bottles'|'Spray bottles'|'Salve tins'|'Tea bags'|'Plastic bottles';
+export interface PackagingSupply {
+  id:string;category:PackagingCategory;variant:string;count:number;threshold:number;
+  countCheckedAt?:string;vendor?:string;notes?:string;
+}
+export interface PackagingReceipt {
+  id:string;supplyId:string;quantity:number;vendor?:string;date:string;notes?:string;
+}
+export interface HerbRestockNote {
+  id:string;herbId:string;form:'dry'|'powder';date:string;time?:string;vendorId?:string;notes?:string;
+  /** Historical note only — not a stock receipt. */
+}
+export type MakeProductSource='bulk'|'ingredients';
+export interface ProductionRun {
+  id:string;at:string;productId:string;productName:string;recipeId:string;
+  count:number;packageOz:number;source:MakeProductSource;containerSupplyId:string;
+  containerName:string;bulkUsedOz:number;ingredients:BatchIngredient[];
+}
 export type ProductionStep = 'planned'|'preparing'|'waiting'|'ready'|'done';
 /** A production checklist item; never changes quantities by itself. */
 export interface ProductionTask {
@@ -51,10 +71,12 @@ export interface BotanicaDB {
   schemaVersion: number; appVersion: number; mode: 'demo' | 'real';
   herbs: Herb[]; items: GeneralItem[]; vendors: Vendor[]; purchases: Purchase[]; priceQuotes: PriceQuote[];
   recipes: Recipe[]; batches: Batch[]; products: Product[]; productionTasks: ProductionTask[];
+  packagingSupplies:PackagingSupply[];packagingReceipts:PackagingReceipt[];
+  productionRuns:ProductionRun[];herbRestockNotes:HerbRestockNote[];
   bulk: Record<string, number>; movements: StockMovement[];
   updatedAt: string;
 }
-export type PageId = 'home' | 'inventory' | 'production' | 'work' | 'bottling' | 'items' | 'herbs' | 'restock' | 'recipes' | 'batches' | 'products' | 'settings';
+export type PageId = 'home' | 'inventory' | 'production' | 'work' | 'bottling' | 'containers' | 'items' | 'herbs' | 'restock' | 'recipes' | 'batches' | 'products' | 'settings';
 export const FORMS: StockForm[] = ['dry', 'powder', 'extract'];
 export const FORM_LABEL: Record<StockForm, string> = {dry:'Dried herb',powder:'Powder',extract:'Tincture extract'};
 export const FORM_UNIT: Record<StockForm, 'oz_wt' | 'fl_oz'> = {dry:'oz_wt',powder:'oz_wt',extract:'fl_oz'};

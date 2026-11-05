@@ -1,4 +1,5 @@
 import type { BotanicaDB, Herb, Recipe, Product } from '../types';
+import {defaultPackagingSupplies} from './packaging';
 const herb = (id:string,name:string,dry:number,extract:number,threshold=8,category:Herb['category']='herb'):Herb => ({
   id,name,aliases:[],category,stock:{dry,powder:0,extract},thresholds:{dry:threshold,powder:0,extract:4},preferredVendorId:'vendor-demo',quotedPricePerLb:24
 });
@@ -22,5 +23,5 @@ const products:Product[] = [
   {id:'demo-p2',name:'Calming Blend · 4 fl oz',kind:'tincture',recipeId:'demo-r1',packageOz:4,count:0},
   {id:'demo-p3',name:'Tummy Tea · 2 oz',kind:'tea',recipeId:'demo-r2',packageOz:2,count:5}
 ];
-export function demoDB():BotanicaDB {return {schemaVersion:4,appVersion:5,mode:'demo',herbs,items:[],vendors:[{id:'vendor-demo',name:'Example Herb Supplier'}],purchases:[],priceQuotes:[],recipes,batches:[],productionTasks:[],products,bulk:{'demo-r1':4,'demo-r2':6},movements:[],updatedAt:new Date().toISOString()};}
-export function emptyDB():BotanicaDB {return {schemaVersion:3,appVersion:4,mode:'real',herbs:[],items:[],vendors:[],purchases:[],priceQuotes:[],recipes:[],batches:[],productionTasks:[],products:[],bulk:{},movements:[],updatedAt:new Date().toISOString()};}
+export function demoDB():BotanicaDB {return {schemaVersion:5,appVersion:7,mode:'demo',herbs,items:[],vendors:[{id:'vendor-demo',name:'Example Herb Supplier'}],purchases:[],priceQuotes:[],recipes,batches:[],productionTasks:[],products,packagingSupplies:defaultPackagingSupplies(),packagingReceipts:[],productionRuns:[],herbRestockNotes:[],bulk:{'demo-r1':4,'demo-r2':6},movements:[],updatedAt:new Date().toISOString()};}
+export function emptyDB():BotanicaDB {return {schemaVersion:5,appVersion:7,mode:'real',herbs:[],items:[],vendors:[],purchases:[],priceQuotes:[],recipes:[],batches:[],productionTasks:[],products:[],packagingSupplies:defaultPackagingSupplies(),packagingReceipts:[],productionRuns:[],herbRestockNotes:[],bulk:{},movements:[],updatedAt:new Date().toISOString()};}

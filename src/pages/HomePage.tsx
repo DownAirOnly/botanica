@@ -1,4 +1,4 @@
-import {ArrowRight,BookOpen,Boxes,ClipboardCheck,FlaskConical,Leaf,Package,PackageCheck,ShoppingBasket,ShoppingCart} from 'lucide-react';
+import {ArrowRight,BookOpen,Boxes,ClipboardCheck,FlaskConical,Package,PackageCheck,ShoppingBasket,ShoppingCart} from 'lucide-react';
 import {Badge,Button,Card,EmptyState,Metric,RowItem} from '../components/UI';
 import {restockQueue,stockCountQueue,productionQueue,localDate,productionStepLabels} from '../domain/workflow';
 import {FORM_LABEL,formatAmount,unitLabel,type PageId} from '../types';
@@ -15,8 +15,10 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
  const bulk=Object.entries(db.bulk).filter(([,qty])=>qty>0);
  const today=localDate();
  const due=tasks.filter(t=>t.step==='ready'||(t.dueOn&&t.dueOn<=today));
- const totalCounts=unverified.length+productCounts.length;
- const urgent=needsRestock.length+due.length;
+ const containerCounts=db.packagingSupplies.filter(c=>!c.countCheckedAt);
+ const lowContainers=db.packagingSupplies.filter(c=>c.countCheckedAt&&c.threshold>0&&c.count<=c.threshold);
+ const totalCounts=unverified.length+productCounts.length+containerCounts.length;
+ const urgent=needsRestock.length+due.length+lowContainers.length;
  return <div className="today-page">
    <section className="today-hero">
      <div className="today-hero-copy"><span className="eyebrow">YOUR WORKBENCH</span>
@@ -31,7 +33,7 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
    <div className="today-stats">
      <button className="today-stat" onClick={()=>onOpenRestock('verify')}>
        <span><ClipboardCheck size={20}/><strong>{totalCounts}</strong></span>
-       <span>Counts to verify</span><small>Herbs and finished goods</small>
+       <span>Counts to verify</span><small>Herbs, containers and products</small>
      </button>
      <button className="today-stat" onClick={()=>onOpenRestock('reorder')}>
        <span><ShoppingCart size={20}/><strong>{needsRestock.length}</strong></span>
@@ -58,6 +60,12 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
        {unverified.slice(0,3).map(x=><RowItem key={x.herb.id+x.form} title={x.herb.name}
          detail={`${FORM_LABEL[x.form]} · physical count needed`}
          end={<Badge>Count</Badge>} onClick={()=>onOpenRestock('verify')}/>)}
+       {lowContainers.slice(0,2).map(c=><RowItem key={c.id} title={c.category+' · '+c.variant}
+         detail="Packaging supply at or below reorder threshold" end={<Badge tone="warning">Container</Badge>}
+         onClick={()=>onNavigate('containers')}/>)}
+       {containerCounts.slice(0,2).map(c=><RowItem key={c.id} title={c.category+' · '+c.variant}
+         detail="Container stock · physical count needed" end={<Badge>Count</Badge>}
+         onClick={()=>onNavigate('containers')}/>)}
        {productCounts.slice(0,2).map(p=><RowItem key={p.id} title={p.name}
          detail="Finished product · not counted" end={<Badge>Count</Badge>}
          onClick={()=>onNavigate('products')}/>)}
@@ -90,9 +98,9 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
    <div className="today-quick-title"><h3>Common tasks</h3><p>One tap to the right work area.</p></div>
    <div className="today-quick-grid">
      <button onClick={()=>onOpenRestock('reorder')}><ShoppingCart size={20}/><span><strong>Restock supplies</strong><small>Supplier list & receipts</small></span><ArrowRight size={16}/></button>
-     <button onClick={()=>onNavigate('herbs')}><Leaf size={20}/><span><strong>Find an ingredient</strong><small>Counts, costs & history</small></span><ArrowRight size={16}/></button>
+     <button onClick={()=>onNavigate('containers')}><Boxes size={20}/><span><strong>Packaging supplies</strong><small>Bottles, tins and bags</small></span><ArrowRight size={16}/></button>
      <button onClick={()=>onNavigate('recipes')}><BookOpen size={20}/><span><strong>Open recipes</strong><small>Formulas & quantities</small></span><ArrowRight size={16}/></button>
-     <button onClick={()=>onNavigate('batches')}><Package size={20}/><span><strong>Record a batch</strong><small>Measured production</small></span><ArrowRight size={16}/></button>
+     <button onClick={()=>onNavigate('bottling')}><Package size={20}/><span><strong>Make product</strong><small>Mix or bottle stock</small></span><ArrowRight size={16}/></button>
    </div>
    {db.movements.length>0&&<Card title="Recent changes" action={<ShoppingBasket size={18} className="muted-icon"/>}>
      {db.movements.slice(0,4).map(m=><RowItem key={m.id} title={m.reason} detail={new Date(m.at).toLocaleDateString()}
