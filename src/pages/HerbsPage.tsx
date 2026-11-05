@@ -31,23 +31,24 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
  const [adjust,setAdjust]=useState(false),[buy,setBuy]=useState(false),[extract,setExtract]=useState(false),[editing,setEditing]=useState(false);
  const [sourceModal,setSourceModal]=useState(false),[historicModal,setHistoricModal]=useState(false);
  const [sourceForm,setSourceForm]=useState<'dry'|'powder'>('dry'),[sourceVendor,setSourceVendor]=useState(''),[sourceNote,setSourceNote]=useState('');
- const [histForm,setHistForm]=useState<'dry'|'powder'>('dry'),[histDate,setHistDate]=useState(''),[histVendor,setHistVendor]=useState(''),[histNote,setHistNote]=useState('');
+ const [histForm,setHistForm]=useState<'dry'|'powder'>('dry'),[histDate,setHistDate]=useState(''),[histTime,setHistTime]=useState(''),[histVendor,setHistVendor]=useState(''),[histNote,setHistNote]=useState('');
  const [form,setForm]=useState<StockForm>('dry'),[mode,setMode]=useState<'add'|'use'|'set'>('add'),[qty,setQty]=useState(''),[reason,setReason]=useState('');
- const [pVendor,setPVendor]=useState(db.vendors.find(v=>v.id===herb.preferredVendorId)?.name||''),[pForm,setPForm]=useState<'dry'|'powder'>('dry'),[pQty,setPQty]=useState('16'),[pPrice,setPPrice]=useState(herb.quotedPricePerLb?.toString()||''),[pShipping,setPShipping]=useState('0'),[pDate,setPDate]=useState(new Date().toISOString().slice(0,10));
+ const [pTime,setPTime]=useState('');
+  const [pVendor,setPVendor]=useState(db.vendors.find(v=>v.id===herb.preferredVendorId)?.name||''),[pForm,setPForm]=useState<'dry'|'powder'>('dry'),[pQty,setPQty]=useState('16'),[pPrice,setPPrice]=useState(herb.quotedPricePerLb?.toString()||''),[pShipping,setPShipping]=useState('0'),[pDate,setPDate]=useState(new Date().toISOString().slice(0,10));
  const [eForm,setEForm]=useState<'dry'|'powder'>('dry'),[eInput,setEInput]=useState(''),[eOutput,setEOutput]=useState(''),[eNotes,setENotes]=useState('');
  const [editName,setEditName]=useState(herb.name),[aliases,setAliases]=useState(herb.aliases.join(', ')),[thresholds,setThresholds]=useState({...herb.thresholds}),[vendorId,setVendorId]=useState(herb.preferredVendorId||'');
  const moves=db.movements.filter(m=>m.kind==='ingredient'&&m.itemId===herb.id).sort((a,b)=>b.at.localeCompare(a.at));
  const purchases=db.purchases.filter(p=>p.herbId===herb.id).sort((a,b)=>b.date.localeCompare(a.date));
  const historic=db.herbRestockNotes.filter(r=>r.herbId===herb.id).sort((a,b)=>b.date.localeCompare(a.date));
  const restock=(['dry','powder'] as const).map(form=>{
-   const p=purchases.filter(p=>p.form===form).map(p=>({date:p.date,vendorId:p.vendorId,kind:'Receipt'}));
-   const n=historic.filter(n=>n.form===form).map(n=>({date:n.date,vendorId:n.vendorId,kind:'Historical note'}));
-   return {form,latest:[...p,...n].sort((a,b)=>b.date.localeCompare(a.date))[0],noted:herb.currentStockSource?.[form]};
+   const p=purchases.filter(p=>p.form===form).map(p=>({date:p.date,time:p.receivedTime,vendorId:p.vendorId,kind:'Receipt'}));
+   const n=historic.filter(n=>n.form===form).map(n=>({date:n.date,time:n.time,vendorId:n.vendorId,kind:'Historical note'}));
+   return {form,latest:[...p,...n].sort((a,b)=>(b.date+' '+(b.time||'')).localeCompare(a.date+' '+(a.time||'')))[0],noted:herb.currentStockSource?.[form]};
  });
  const connections=db.recipes.filter(r=>r.ingredients.some(i=>i.herbId===herb.id));
  function run(fn:()=>typeof db,success:string){try{const next=fn();setDB(()=>next);notify(success);}catch(e){reportError(e);}}
  function applyAdjust(){if(!qty.trim()){reportError(new Error('Enter an amount.'));return;}run(()=>adjustStock(db,herb.id,form,mode,Number(qty),reason),'Stock adjustment recorded.');if(reason.trim()&&qty.trim())setAdjust(false);}
- function applyBuy(){try{if(!pVendor.trim())throw new Error('Enter a supplier name.');if(!pQty.trim()||!pPrice.trim()||!pShipping.trim()||!pDate)throw new Error('Complete the quantity, price, shipping and date fields.');const vendor=ensureVendor(db,pVendor);const purchase:Purchase={id:makeId(),herbId:herb.id,vendorId:vendor.id,form:pForm,quantityOz:Number(pQty),pricePerLb:Number(pPrice),shipping:Number(pShipping),date:pDate};const updated=receivePurchase(vendor.db,purchase);setDB(()=>updated);notify('Purchase received and stock updated.');setBuy(false);}catch(e){reportError(e);}}
+ function applyBuy(){try{if(!pVendor.trim())throw new Error('Enter a supplier name.');if(!pQty.trim()||!pPrice.trim()||!pShipping.trim()||!pDate)throw new Error('Complete the quantity, price, shipping and date fields.');const vendor=ensureVendor(db,pVendor);const purchase:Purchase={id:makeId(),herbId:herb.id,vendorId:vendor.id,form:pForm,quantityOz:Number(pQty),pricePerLb:Number(pPrice),shipping:Number(pShipping),date:pDate,receivedTime:pTime||undefined};const updated=receivePurchase(vendor.db,purchase);setDB(()=>updated);notify('Purchase received and stock updated.');setBuy(false);}catch(e){reportError(e);}}
  function applyExtract(){try{const next=extractStock(db,herb.id,eForm,Number(eInput),Number(eOutput),eNotes);setDB(()=>next);notify('Extraction recorded with measured input and output.');setExtract(false);}catch(e){reportError(e);}}
  function openSource(form:'dry'|'powder'){
    setSourceForm(form);setSourceVendor(herb.currentStockSource?.[form]?.vendorId||'');
@@ -59,7 +60,7 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
  }catch(e){reportError(e);}}
  function saveHistoricalRestock(){try{
    const next=recordHistoricalHerbRestock(db,{herbId:herb.id,form:histForm,date:histDate,
-     vendorId:histVendor||undefined,notes:histNote.trim()||undefined});
+     vendorId:histVendor||undefined,time:histTime||undefined,notes:histNote.trim()||undefined});
    setDB(()=>next);notify('Dated restock note recorded, no stock changed.');setHistoricModal(false);
  }catch(e){reportError(e);}}
  function applyEdit(){try{const next=saveHerb(db,{...herb,name:editName.trim(),aliases:aliases.split(',').map(s=>s.trim()).filter(Boolean),thresholds,preferredVendorId:vendorId||undefined});setDB(()=>next);notify('Herb details updated.');setEditing(false);}catch(e){reportError(e);}}
@@ -74,10 +75,10 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
     <div className="card-footer"><Button variant="ghost" onClick={()=>setEditing(true)}>Edit thresholds</Button></div>
    </Card>
    <CostsSummary herb={herb} onMore={()=>setTab('costs')} onReceive={()=>setBuy(true)}/>
-    <Card title="Restocking & source" action={<Button size="sm" variant="ghost" onClick={()=>{setHistDate('');setHistVendor('');setHistNote('');setHistoricModal(true);}}>Add older date</Button>}>
+    <Card title="Restocking & source" action={<Button size="sm" variant="ghost" onClick={()=>{setHistDate('');setHistTime('');setHistVendor('');setHistNote('');setHistoricModal(true);}}>Add older date</Button>}>
       {restock.map(({form,latest,noted})=><div className="herb-source-entry" key={form}>
         <strong>{FORM_LABEL[form]}</strong>
-        <p className="body-copy">{latest?`Last documented restock: ${latest.date} (${latest.kind})`:'No dated restock on record'}</p>
+        <p className="body-copy">{latest?`Last documented restock: ${latest.date}${latest.time?' at '+latest.time:''} (${latest.kind})`:'No dated restock on record'}</p>
         {latest?.vendorId&&<p className="hint">Last recorded supplier: {db.vendors.find(v=>v.id===latest.vendorId)?.name||'Unknown'}</p>}
         <p className="hint">Current stock source: {noted?db.vendors.find(v=>v.id===noted.vendorId)?.name||'Unknown':'Not confirmed'}</p>
         <Button size="sm" variant="secondary" onClick={()=>openSource(form)}>Note current supplier</Button>
@@ -117,6 +118,7 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
     <SelectField label="Form" value={histForm} onChange={e=>setHistForm(e.target.value as 'dry'|'powder')}>
       <option value="dry">Dried herb</option><option value="powder">Powder</option></SelectField>
     <Field label="Restocked on" type="date" value={histDate} onChange={e=>setHistDate(e.target.value)}/>
+    <Field label="Approximate time (optional)" type="time" value={histTime} onChange={e=>setHistTime(e.target.value)}/>
     <SelectField label="Supplier (optional)" value={histVendor} onChange={e=>setHistVendor(e.target.value)}>
       <option value="">Unknown</option>{db.vendors.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</SelectField>
     <Field label="Notes" value={histNote} onChange={e=>setHistNote(e.target.value)}/>
