@@ -78,11 +78,11 @@ export function ProductionHub({section,onSectionChange,selectedRecipe,onMakeBatc
        <Button onClick={()=>onSectionChange('batch')}><PackagePlus size={16}/> Make a batch</Button></div>
      <ProductionTasks/>
      <div className="two-columns">
-       <Card title="Bulk ready for bottling" action={<Badge>{bulk.length} mixtures</Badge>}>
+       <Card title="Unpackaged bulk stock" action={<Badge>{bulk.length} mixtures</Badge>}>
          {bulk.length?bulk.slice(0,10).map(([id,qty])=>{
            const recipe=db.recipes.find(r=>r.id===id);
            return <RowItem key={id} title={recipe?.name||'Unlinked bulk'}
-             detail="Recorded mixture, ready for packaging"
+             detail="Recorded mixture · check linked products in Bottling"
              end={`${formatAmount(qty)} ${recipe?unitLabel(RECIPE_UNIT[recipe.kind]):'oz'}`}/>;
          }):<EmptyState title="Nothing ready to bottle" description="Recorded batches appear here once they create bulk stock."/>}
          <div className="card-footer"><Button variant="secondary" onClick={()=>onSectionChange('bottle')}>
