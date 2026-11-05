@@ -1,5 +1,17 @@
 # Changelog
 
+## v5 — 2026-11-05 (daily business workflows)
+
+- Replaced vanity catalog counts on Herbal Home with action priorities: ingredient and finished-product counts to verify, confirmed replenishment, production tasks, and recorded bulk ready for packaging.
+- Added Stock & Restocking with prioritized physical counts and grouped supplier restock needs. Confirms physical quantities via a logged adjustment; receiving purchases records receipts but **does not** silently verify historical stock.
+- Added lightweight persistent production tasks with optional recipe links, notes, stage and target date; no assumed tincture-processing duration. Task stages are informational and **do not** automatically change inventory quantities.
+- Recipe and batch checks now distinguish **not counted** from **actually short**. Ingredient stock must be physically verified before measured extraction or batch deduction.
+- Added finished SKU verification status and a To count filter. Imported zeroes are not mislabeled as verified out-of-stock quantities.
+- Updated schema to v4; v1–v3 backups migrate, preserving old amounts, recipes, purchases, supplier prices, and archival source data without inventing verification dates.
+- Original private spreadsheets and formulas are never added to GitHub. Test the actual workflow with the business owner before adding automated orders or an assumed production calendar.
+
+
+
 ## v4 — 2026-11-05 (purchasing and supplier costs)
 
 - Deployment follow-up: added a visible, user-controlled PWA update notice, including checks when the app is brought back into focus. This fixes the previous silent waiting-update behavior without force-reloading unsaved forms.
