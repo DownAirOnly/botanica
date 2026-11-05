@@ -58,7 +58,7 @@ export function ProductionHistoryPage(){
       <p className="hint">These are recorded quantities, not sales or demand. Tincture batch volume, single-herb extract output, tea weight and finished units are deliberately kept separate; they are not added together.</p>
     </Card>
     <div className="two-columns">
-      <Card title="Most frequently made">
+      <Card title="Top by recorded quantity">
         {result.leaders.length?result.leaders.map((item,i)=><RowItem key={item.name}
           title={(i+1)+'. '+item.name}
           detail={item.events+' recorded '+(item.events===1?'event':'events')}
