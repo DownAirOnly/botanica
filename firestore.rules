@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Every workspace is currently private to its owner. Never allow access
+    // merely because someone has signed in with a Google account.
+    match /workspaces/{workspaceId} {
+      function ownsExisting() { return request.auth != null && resource.data.ownerUid == request.auth.uid; }
+      function ownsWorkspace() { return request.auth != null && get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerUid == request.auth.uid; }
+      function ownsWorkspaceAfter() { return request.auth != null && getAfter(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerUid == request.auth.uid; }
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['name','kind','ownerUid','createdAt'])
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.kind in ['herbal','general'];
+      allow get, list: if ownsExisting();
+      allow update: if ownsExisting()
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.kind == resource.data.kind
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 80;
+      allow delete: if false;
+      match /data/{docId} {
+        allow get: if docId == 'current' && ownsWorkspace();
+        allow list, delete: if false;
+        allow create: if docId == 'current' && ownsWorkspaceAfter()
+          && request.resource.data.keys().hasOnly(['revision','json','updatedAt','updatedBy'])
+          && request.resource.data.revision == 0
+          && request.resource.data.updatedBy == request.auth.uid
+          && request.resource.data.json is string;
+        allow update: if docId == 'current' && ownsWorkspace()
+          && request.resource.data.keys().hasOnly(['revision','json','updatedAt','updatedBy'])
+          && request.resource.data.revision == resource.data.revision + 1
+          && request.resource.data.updatedBy == request.auth.uid
+          && request.resource.data.json is string
+          && request.resource.data.json.size() < 750000;
+      }
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

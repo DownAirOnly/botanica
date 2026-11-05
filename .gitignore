@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.local
+.env
+.env.*
+!.env.example
+*.xlsx
+*.xls
+*.csv
+*.zip
+*.json.bak
+.DS_Store
+.firebase/
