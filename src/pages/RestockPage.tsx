@@ -4,12 +4,13 @@ import {Button,Card,EmptyState,Field,Modal,Tabs} from '../components/UI';
 import {adjustStock,ensureVendor,receivePurchase} from '../domain/inventory';
 import {quoteVendor,latestPriceQuote} from '../domain/pricing';
 import {restockQueue,stockCountQueue} from '../domain/workflow';
-import {FORM_LABEL,FORM_UNIT,formatAmount,makeId,unitLabel,type Purchase,type StockForm} from '../types';
+import {FORM_LABEL,FORM_UNIT,formatAmount,makeId,unitLabel,type Purchase,type StockForm,type RestockTab} from '../types';
 import {useApp} from '../state/AppContext';
+import {RestockPlansPanel} from '../components/RestockPlansPanel';
 
-export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBack:()=>void;onOpenHerb:(id:string)=>void;initialTab:'verify'|'reorder';embedded?:boolean}){
+export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBack:()=>void;onOpenHerb:(id:string)=>void;initialTab:RestockTab;embedded?:boolean}){
  const {db,setDB,notify,reportError}=useApp();
- const [tab,setTab]=useState<'verify'|'reorder'>(initialTab);
+ const [tab,setTab]=useState<RestockTab>(initialTab);
  const [query,setQuery]=useState('');
  const [countTarget,setCountTarget]=useState<{herbId:string;form:StockForm}|null>(null);
  const [countQty,setCountQty]=useState(''),[countReason,setCountReason]=useState('Physical count confirmed');
@@ -64,11 +65,11 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
      <div className="metric"><span className="metric-label">Needs replenishing</span><strong className="metric-value">{restock.length}</strong><small className="metric-meta">Confirmed shortages or reorder points</small></div>
      <div className="metric"><span className="metric-label">Suppliers</span><strong className="metric-value">{new Set([...byVendor.keys()].filter(x=>x!=='Supplier not set'&&x!=='Prepare extract')).size}</strong><small className="metric-meta">In the current restock list</small></div>
    </div>
-   <div className="toolbar"><Tabs value={tab} onChange={v=>setTab(v as 'verify'|'reorder')}
-     options={[{id:'verify',label:`Verify counts (${unchecked.length})`},{id:'reorder',label:`Restock (${restock.length})`}]}/>
-     <label className="search-field"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search ingredients…" aria-label="Filter ingredient list"/></label>
+   <div className="toolbar"><Tabs value={tab} onChange={v=>setTab(v as RestockTab)}
+     options={[{id:'verify',label:`Verify counts (${unchecked.length})`},{id:'reorder',label:`Restock (${restock.length})`},{id:'schedule',label:`Schedule (${db.restockPlans.filter(p=>p.active).length})`}]}/>
+     {tab!=='schedule'&&<label className="search-field"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search ingredients…" aria-label="Filter ingredient list"/></label>}
    </div>
-   {tab==='verify'?<Card title="Unverified ingredient amounts">
+   {tab==='schedule'?<RestockPlansPanel/>:tab==='verify'?<Card title="Unverified ingredient amounts">
      <p className="hint">Imported amounts are historical until checked. These rows are not labeled as out of stock. Priority is given to ingredients used in active formulas.</p>
      {visibleUnchecked.length?visibleUnchecked.map(({herb,form,active})=>
        <div className="row-item" key={herb.id+'-'+form}>
