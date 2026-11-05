@@ -24,6 +24,7 @@ export default function App(){
    case 'bottling':setProductionSection('bottle');setPage('production');return;
    case 'inventory':setPage('inventory');return;
    case 'production':setPage('production');return;
+   case 'work':setProductionSection('queue');setPage('production');return;
    default:setPage(target);
   }
  }
