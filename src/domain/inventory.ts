@@ -79,6 +79,7 @@ export function completeBatch(db:BotanicaDB,recipeId:string,totalOz:number,notes
 export function saveProduct(db:BotanicaDB,p:Product):BotanicaDB {
   if(!p.name.trim()||!okQuantity(p.packageOz)||p.count<0||!Number.isInteger(p.count))throw new StockError('Enter a product name, valid package size, and nonnegative whole count.');
   if(p.recipeId&&!db.recipes.some(r=>r.id===p.recipeId))throw new StockError('Linked recipe not found.');
+  if(p.containerSupplyId&&!db.packagingSupplies.some(x=>x.id===p.containerSupplyId))throw new StockError('Choose an existing container type.');
   const existing=db.products.find(x=>x.id===p.id);
   const count=existing?.count ?? p.count;
   return updated({...db,products:existing?db.products.map(x=>x.id===p.id?{...p,count}:x):[...db.products,p]});
