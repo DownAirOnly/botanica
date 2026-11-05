@@ -7,10 +7,10 @@ import {packagingName} from '../data/packaging';
 import {useApp} from '../state/AppContext';
 
 const fresh=():Product=>({id:makeId(),name:'',kind:'tincture',packageOz:2,count:0});
-export function ProductsPage({onMakeProduct}:{onMakeProduct:(productId:string)=>void}){
+export function ProductsPage({onMakeProduct,initialEditProductId}:{onMakeProduct:(productId:string)=>void;initialEditProductId?:string|null}){
  const {db,setDB,notify,reportError}=useApp();
  const [query,setQuery]=useState(''),[filter,setFilter]=useState('all');
- const [editing,setEditing]=useState<Product|null>(null);
+ const [editing,setEditing]=useState<Product|null>(()=>{const p=db.products.find(p=>p.id===initialEditProductId);return p?structuredClone(p):null;});
  const [adjustId,setAdjustId]=useState<string|null>(null),[adjustMode,setAdjustMode]=useState<'add'|'use'|'set'>('use'),
    [adjustCount,setAdjustCount]=useState('1'),[adjustReason,setAdjustReason]=useState('');
  const products=db.products.filter(p=>(filter==='all'||(filter==='uncounted'?!p.countCheckedAt:p.kind===filter))&&
