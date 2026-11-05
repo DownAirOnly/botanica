@@ -232,3 +232,32 @@
  .workspace-switch{min-width:116px;max-width:155px}
  .today-quick-grid{grid-template-columns:1fr}
 }
+
+/* v7 — packaging counts and the single-step Make Product workflow */
+.packaging-supply-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.packaging-supply-row:last-child{border-bottom:none}
+.packaging-supply-row .row-main{flex:1;min-width:0}
+.packaging-supply-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.packaging-supply-actions .btn{white-space:nowrap}
+.make-product-summary{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line);margin-top:12px}
+.make-product-summary .row-item{gap:8px}
+.make-issues{display:flex;align-items:flex-start;gap:10px;margin:14px 0}
+.make-issues>div{display:flex;flex-direction:column;gap:7px;min-width:0}
+.make-issues strong{font-size:.88rem}
+.make-issues p{font-size:.8rem;line-height:1.42}
+.make-confirm{display:flex;flex-direction:column;gap:12px;margin-top:18px}
+.make-confirm>.btn{align-self:flex-start}
+.make-confirm .hint{max-width:500px}
+.herb-source-entry{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:13px 0;border-bottom:1px solid var(--line)}
+.herb-source-entry:last-of-type{border-bottom:none}
+.herb-source-entry strong{font-size:.89rem}
+.herb-source-entry .btn{margin-top:3px}
+@media(max-width:760px){
+ .packaging-supply-row{flex-wrap:wrap;gap:8px}
+ .packaging-supply-row .row-main{flex:1 1 70%}
+ .packaging-supply-actions{flex-basis:100%;width:100%}
+ .packaging-supply-actions .btn{flex:1}
+ .make-confirm>.btn{align-self:stretch}
+ .make-product-summary .row-item{flex-wrap:wrap}
+ .make-product-summary .row-end{text-align:right}
+}
