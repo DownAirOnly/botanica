@@ -36,12 +36,10 @@ Requirements: a recent Node.js LTS release, a separate Firebase project, Google 
 
 ```sh
 npm install
-cp .env.example .env.local
-# Add your Firebase web app configuration to .env.local
 npm run dev
 ```
 
-Follow **[Firebase setup](docs/FIREBASE_SETUP.md)** before entering business data. Deploy `firestore.rules` to the selected Firebase project. For GitHub Pages, set the corresponding `VITE_FIREBASE_...` values as GitHub Actions variables, enable Pages with GitHub Actions, and authorize the deployed domain for Google sign-in. The included workflow builds the site at `/botanica/` on pushes to `main`.
+Follow **[Firebase setup](docs/FIREBASE_SETUP.md)** before entering business data. Deploy `firestore.rules` to the selected Firebase project. The Firebase web-app configuration for `botanica-45e4b` is already included as public client settings; optional `VITE_FIREBASE_...` variables can override it for alternate environments. Enable Pages with GitHub Actions and authorize `downaironly.github.io` for Google sign-in. The included workflow builds the site at `/botanica/` on pushes to `main`.
 
 ## Architecture and release discipline
 

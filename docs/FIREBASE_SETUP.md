@@ -9,12 +9,12 @@ Botanica uses **its own Firebase project**, separate from the Everyday app or ot
 3. Under **Authentication → Settings → Authorized domains**, add the actual hostname serving Botanica (for GitHub Pages, `downaironly.github.io`). Keep `localhost` authorized for local development if needed.
 4. Create **Cloud Firestore** in production mode, in your preferred region. Do not leave public test rules enabled.
 5. Deploy the included `firestore.rules` before adding business data. The rules are owner-only, not a broad `request.auth != null` permission.
-6. Copy `.env.example` to `.env.local` and populate its `VITE_FIREBASE_...` values from Firebase Console → Project settings → Web app configuration. Never put Admin SDK service accounts in Vite variables.
+6. The public client Firebase web configuration for project `botanica-45e4b` is already included in `src/lib/firebase.ts`. `VITE_FIREBASE_...` values are optional overrides for a different development/test project. Never put Admin SDK service accounts in Vite variables.
 7. Run `npm install`, then `npm run dev`. After signing in, create your first workspace.
 
 ## GitHub Pages deployment
 
-In GitHub repository **Settings → Secrets and variables → Actions → Variables**, create `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`. The workflow passes these public web configuration fields to the build. Enable Pages deployment via GitHub Actions.
+The app already includes Botanica's public Firebase web settings, so **no GitHub Actions Firebase variables are required for the default project**. Enable Pages deployment via GitHub Actions in repository Settings → Pages. Verify a successful workflow run, enable Google provider, publish the owner-only Firestore rules, and authorize `downaironly.github.io` in Firebase Authentication.
 
 **Important:** Firebase's web API key and client config aren't sufficient to read private inventory—Firestore rules are the access boundary. Nevertheless, avoid checking in personal service credentials, business spreadsheets or data exports.
 

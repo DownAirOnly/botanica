@@ -2,6 +2,14 @@
 
 Botanica uses consecutive **whole-number release versions**. Product changes are documented here rather than accumulating in README.
 
+## v3 — 2026-11-04 (repository deployment and Firebase wiring)
+
+- Connected public Firebase Web App configuration for project `botanica-45e4b`; service-account credentials and business records remain excluded.
+- Uploaded complete source to `DownAirOnly/botanica` and enabled a GitHub Pages deployment workflow on `main`.
+- Corrected TypeScript build setup with Vite environment types and removed unused imports.
+- Updated the conversation-handoff context and phone-first deployment guidance.
+- **Deployment status:** Source committed. A successful GitHub Pages deploy, published Firestore rules, enabled Google provider, authorized domain, and real-device sign-in/data tests must still be verified before business use.
+
 ## v2 — 2026-11-04 (local implementation; not yet deployed)
 
 - Added a Firebase Authentication and Google sign-in foundation.

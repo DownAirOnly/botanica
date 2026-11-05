@@ -1,6 +1,6 @@
 # Botanica — project context / conversation handoff
 
-**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-04. Current local source version: **v2 (unreleased, unverified)**.
+**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-04. Current repository source version: **v3 (committed, deployment and live Firebase tests pending)**.
 
 ## Mission
 
@@ -11,7 +11,7 @@ Build an exceptionally streamlined, reliable, mobile-first inventory and small-b
 - Canonical repo: `DownAirOnly/botanica` (currently public), default branch `main`.
 - Framework: React + TypeScript + Vite; CSS design tokens; `lucide-react`; Firebase Google sign-in and private Firestore workspaces.
 - GitHub Pages target: `https://downaironly.github.io/botanica/`, subject to Pages enablement and successful deployment.
-- **At initial creation, GitHub connector returned 403 on writing to this newly created repo**. Local project archive prepared for transfer; do not claim commits/deployment occurred until confirmed.
+- **GitHub write permission was restored on 2026-11-04.** Full v3 source is committed on `main`, including `.github/workflows/deploy.yml`. Website publishing must be verified in GitHub Actions.
 - **Never publish original inventory spreadsheets, proprietary formulas, or actual purchase histories to this public repo without explicit permission.** Source data stays local/private by default.
 
 ## Product information provided
@@ -48,7 +48,7 @@ Four Excel workbooks: `MY HERBS.xlsx`, `TINCTURE RECIPES.xlsx`, `Tea Recipes.xls
 
 ## Version boundaries
 
-v1 was the local-first prototype. Local v2 source adds authentication and private workspace persistence, but has not been built, deployed, or independently verified. Before real business deployment: install dependencies, run a clean typecheck/build, deploy and test Firestore security rules and account flow, validate all imports, and confirm real stock with the owner.
+v1 was the local-first prototype. v2 introduced authentication and private workspaces. v3 connects the dedicated Firebase web client and commits the code and workflow to GitHub; successful deployment and real-device tests remain open. Before real business deployment: install dependencies, run a clean typecheck/build, deploy and test Firestore security rules and account flow, validate all imports, and confirm real stock with the owner.
 
 ## v2 follow-up decision (2026-11-04)
 
@@ -64,3 +64,15 @@ The owner clarified that Botanica should be a **multipurpose inventory system wi
 - Dependency installation stalled in the current environment; build, authentication and rules testing remain outstanding. Avoid declaring v2 production-ready.
 
 **Priority after moving source into GitHub:** configure dedicated Firebase project, deploy owner-only rules, register authorized GitHub Pages domain, set GitHub Actions variables, run minimal typecheck and phone/desktop smoke checks, verify Google login on mom's Android and on iOS, and review actual workbook imports before making the inventory official.
+
+## v3 deployment handoff — newest facts (2026-11-04)
+
+- Repo: https://github.com/DownAirOnly/botanica (source files committed, not just a ZIP). Branch: `main`.
+- Intended app URL: https://downaironly.github.io/botanica/ (verify deployment success first).
+- Firebase Project ID: `botanica-45e4b`; auth domain `botanica-45e4b.firebaseapp.com`. The public Firebase web config is in `src/lib/firebase.ts` with optional VITE overrides. No service account keys are in the repo.
+- GitHub Actions workflow: `.github/workflows/deploy.yml`, runs `npm install`, `npm run build`, then uploads `dist` to Pages.
+- GitHub connector can now write to the repository. The initial automated build exposed TypeScript errors, and fixes were committed (Vite typings and unused imports). Recheck latest run; do not claim full deployment without successful Pages job.
+- Required user-side steps: Enable Google in Firebase Authentication → Sign-in method; add `downaironly.github.io` in Authentication → Settings → Authorized domains; publish repo `firestore.rules` in Firestore → Rules; select **GitHub Actions** as Pages source in GitHub Settings → Pages.
+- Verify login and cloud saves on iPhone Safari, installed iOS PWA, and Android. Ensure different accounts cannot read each other's workspace before real imports.
+- Source remains public, but no original workbook recipes or business data are committed.
+- **Historical v2 sections above describe earlier state** and are not instructions to redo Firebase config or the GitHub import.
