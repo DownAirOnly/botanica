@@ -2,7 +2,7 @@ import {ArrowRight,BookOpen,Boxes,CalendarClock,ClipboardCheck,FlaskConical,Pack
 import {Badge,Button,Card,EmptyState,Metric,RowItem} from '../components/UI';
 import {restockQueue,stockCountQueue,productionQueue,localDate,productionStepLabels} from '../domain/workflow';
 import {FORM_LABEL,formatAmount,unitLabel,type PageId,type RestockTab} from '../types';
-import {restockReviewQueue} from '../domain/restockPlans';
+import {restockReviewQueue,pendingRestockFollowups} from '../domain/restockPlans';
 import {getProductionSummary} from '../domain/productionInsights';
 import {useAccount} from '../state/AccountContext';
 import {useApp} from '../state/AppContext';
@@ -18,6 +18,7 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
  const today=localDate();
  const due=tasks.filter(t=>t.step==='ready'||(t.dueOn&&t.dueOn<=today));
  const dueReviews=restockReviewQueue(db,today).filter(x=>x.due);
+ const pendingFollowups=pendingRestockFollowups(db);
  const finishedThisMonth=getProductionSummary(db,'finished','month',today);
  const tincturesThisMonth=getProductionSummary(db,'tincture','month',today);
  const madeNow=finishedThisMonth.bars[finishedThisMonth.bars.length-1].value;
@@ -25,7 +26,7 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
  const containerCounts=db.packagingSupplies.filter(c=>!c.countCheckedAt);
  const lowContainers=db.packagingSupplies.filter(c=>c.countCheckedAt&&c.threshold>0&&c.count<=c.threshold);
  const totalCounts=unverified.length+productCounts.length+containerCounts.length;
- const urgent=needsRestock.length+due.length+lowContainers.length+dueReviews.length;
+ const urgent=needsRestock.length+due.length+lowContainers.length+dueReviews.length+pendingFollowups.length;
  return <div className="today-page">
    <section className="today-hero">
      <div className="today-hero-copy"><span className="eyebrow">YOUR WORKBENCH</span>
