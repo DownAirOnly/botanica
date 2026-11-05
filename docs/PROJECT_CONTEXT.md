@@ -1,6 +1,6 @@
 # Botanica — project context / conversation handoff
 
-**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-04. Current repository source version: **v3 (committed, deployment and live Firebase tests pending)**.
+**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v4 (purchasing and supplier pricing; live device verification pending)**.
 
 ## Mission
 
@@ -48,7 +48,7 @@ Four Excel workbooks: `MY HERBS.xlsx`, `TINCTURE RECIPES.xlsx`, `Tea Recipes.xls
 
 ## Version boundaries
 
-v1 was the local-first prototype. v2 introduced authentication and private workspaces. v3 connects the dedicated Firebase web client and commits the code and workflow to GitHub; successful deployment and real-device tests remain open. Before real business deployment: install dependencies, run a clean typecheck/build, deploy and test Firestore security rules and account flow, validate all imports, and confirm real stock with the owner.
+v1 was the local-first prototype. v2 introduced authentication and private workspaces. v3 connected the dedicated Firebase project and GitHub Pages. GitHub Pages v3 deployed successfully, but authentication, data isolation, and real-device workflows still require live tests. v4 introduces separately dated or undated, form-specific supplier quote history, purchase-price provenance, and a review-first HERBS COST XLSX merge importer. Before real business deployment: install dependencies, run a clean typecheck/build, deploy and test Firestore security rules and account flow, validate all imports, and confirm real stock with the owner.
 
 ## v2 follow-up decision (2026-11-04)
 
@@ -80,3 +80,14 @@ The owner clarified that Botanica should be a **multipurpose inventory system wi
 ## Firebase authorization checkpoint (2026-11-04)
 
 The user confirmed adding `downaironly.github.io` to Firebase Authentication's Authorized domains. Google sign-in still requires a successful live deployment and browser test; do not infer authentication is working solely from the domain setting.
+
+## v4 cost and purchasing scope (2026-11-05)
+
+- The original private `HERBS COST.xlsx` workbook contains `Master Herb` (dry-herb price per pound and supplier), `Powders` (powder prices and supplier), and `Tincture Mixes` (historical production data, not prices). The XLSX itself is **not in the public repository**.
+- A `PriceQuote` belongs to an existing herb ID and form (`dry` or `powder`), records a vendor, per-pound amount, optional supplier quote date, system recording timestamp, and source (`manual`, `workbook`, `purchase`, or `legacy`). A quote is distinct from on-hand stock or receiving a purchase.
+- Purchasing actual stock records the paid price in history and updates quantity via the existing movement ledger. Powder purchases never overwrite dry-herb quote fields.
+- `src/lib/costImport.ts` reads the two cost sheets locally in the browser. Review shows each line and allows only exact named/alias matches to be selected. Zero/blank/invalid prices, missing suppliers, unmatched/ambiguous names and conflicting duplicates are not silently applied. Unchanged undated prices are idempotent. Existing herbs, stock, purchases, formulas, batches, and products are preserved.
+- Legacy v1/v2 JSON restores migrate to schema v3, retaining unknown `sourceArchive` metadata and converting legacy dry-herb quoted price into explicitly **undated** quote history when its supplier is known.
+- Shared UI components provide summary and detail quote history under each herb's Costs tab. Settings has a separate review-first cost importer. Existing security rules and Firestore size checks remain unchanged.
+- Do not assume workbook cost prices were quoted today. The workbook has no price-date column. Do not import `Tincture Mixes` as purchase receipts.
+- v3 deployment was confirmed by the user; no Firebase reconfiguration is needed. Continue testing Google auth, restore, preview, merge, sync, iOS/Android interactions on a real account before production.
