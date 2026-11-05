@@ -22,5 +22,5 @@ const products:Product[] = [
   {id:'demo-p2',name:'Calming Blend · 4 fl oz',kind:'tincture',recipeId:'demo-r1',packageOz:4,count:0},
   {id:'demo-p3',name:'Tummy Tea · 2 oz',kind:'tea',recipeId:'demo-r2',packageOz:2,count:5}
 ];
-export function demoDB():BotanicaDB {return {schemaVersion:2,appVersion:2,mode:'demo',herbs,items:[],vendors:[{id:'vendor-demo',name:'Example Herb Supplier'}],purchases:[],recipes,batches:[],products,bulk:{'demo-r1':4,'demo-r2':6},movements:[],updatedAt:new Date().toISOString()};}
-export function emptyDB():BotanicaDB {return {schemaVersion:2,appVersion:2,mode:'real',herbs:[],items:[],vendors:[],purchases:[],recipes:[],batches:[],products:[],bulk:{},movements:[],updatedAt:new Date().toISOString()};}
+export function demoDB():BotanicaDB {return {schemaVersion:3,appVersion:4,mode:'demo',herbs,items:[],vendors:[{id:'vendor-demo',name:'Example Herb Supplier'}],purchases:[],priceQuotes:[],recipes,batches:[],products,bulk:{'demo-r1':4,'demo-r2':6},movements:[],updatedAt:new Date().toISOString()};}
+export function emptyDB():BotanicaDB {return {schemaVersion:3,appVersion:4,mode:'real',herbs:[],items:[],vendors:[],purchases:[],priceQuotes:[],recipes:[],batches:[],products:[],bulk:{},movements:[],updatedAt:new Date().toISOString()};}
