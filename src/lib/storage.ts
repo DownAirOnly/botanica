@@ -35,7 +35,7 @@ export function validateBackup(value:unknown):BotanicaDB {
     if(h.quotedPricePerLb!=null&&Number.isFinite(h.quotedPricePerLb)&&h.quotedPricePerLb>0&&
        h.preferredVendorId&&vendors.some(x=>x.id===h.preferredVendorId)){
       quotes.push({id:`legacy-${h.id}`,herbId:h.id,form:'dry',vendorId:h.preferredVendorId,
-        pricePerLb:h.quotedPricePerLb,recordedAt:v.updatedAt||new Date().toISOString(),source:'legacy'});
+        pricePerLb:h.quotedPricePerLb,recordedAt:new Date().toISOString(),source:'legacy'});
     }
   }
   return {...v,items:v.schemaVersion===1?[]:v.items!,priceQuotes:quotes,
