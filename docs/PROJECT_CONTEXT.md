@@ -76,3 +76,7 @@ The owner clarified that Botanica should be a **multipurpose inventory system wi
 - Verify login and cloud saves on iPhone Safari, installed iOS PWA, and Android. Ensure different accounts cannot read each other's workspace before real imports.
 - Source remains public, but no original workbook recipes or business data are committed.
 - **Historical v2 sections above describe earlier state** and are not instructions to redo Firebase config or the GitHub import.
+
+## Firebase authorization checkpoint (2026-11-04)
+
+The user confirmed adding `downaironly.github.io` to Firebase Authentication's Authorized domains. Google sign-in still requires a successful live deployment and browser test; do not infer authentication is working solely from the domain setting.
