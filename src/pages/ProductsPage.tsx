@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {Package,PackagePlus,Plus,Search} from 'lucide-react';
-import {Badge,Button,Card,EmptyState,Field,Modal,RowItem,SelectField,Tabs} from '../components/UI';
+import {Badge,Button,Card,EmptyState,Field,Modal,SelectField,Tabs} from '../components/UI';
 import {adjustProductStock,packageProduct,saveProduct} from '../domain/inventory';
 import {formatAmount,makeId,unitLabel,RECIPE_UNIT,type Product} from '../types';
 import {useApp} from '../state/AppContext';
