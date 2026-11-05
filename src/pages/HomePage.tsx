@@ -10,15 +10,16 @@ export function HomePage({onNavigate,onOpenHerb}:{onNavigate:(p:PageId)=>void;on
  const {db}=useApp();const {active}=useAccount();
  if(active?.kind==='general')return <GeneralHome onNavigate={onNavigate}/>;
  const counts=stockCountQueue(db),restock=restockQueue(db),tasks=productionQueue(db);
+ const uncountedProducts=db.products.filter(p=>!p.countCheckedAt);
  const bulk=Object.entries(db.bulk).filter(([,amount])=>amount>0);
  const today=localDate();
  const readyTasks=tasks.filter(t=>t.step==='ready'||(t.dueOn&&t.dueOn<=today));
- const firstActions=readyTasks.length+restock.length+counts.length;
+ const firstActions=readyTasks.length+restock.length+counts.length+uncountedProducts.length;
  return <div className="content-stack">
    <div className="intro"><div><span className="eyebrow">YOUR WORKSPACE</span><h2>What needs doing?</h2>
      <p>Start with stock that needs a count, supplies to replenish, and work already underway. Catalog totals and history remain available in their sections.</p></div></div>
    <div className="metrics-grid">
-     <Metric label="Physical counts to verify" value={counts.length} meta="Unverified ingredient forms"/>
+     <Metric label="Physical counts to verify" value={counts.length+uncountedProducts.length} meta={`${counts.length} ingredient forms · ${uncountedProducts.length} product SKUs`}/>
      <Metric label="Replenish" value={restock.length} meta="Confirmed low or empty items"/>
      <Metric label="Production underway" value={tasks.length} meta="Open tasks"/>
      <Metric label="Bulk ready to package" value={bulk.length} meta="Recorded bulk mixtures"/>
@@ -40,9 +41,11 @@ export function HomePage({onNavigate,onOpenHerb}:{onNavigate:(p:PageId)=>void;on
        {counts.slice(0,4).map(({herb,form})=><RowItem key={herb.id+form}
          title={herb.name} detail={`${FORM_LABEL[form]} · no verified physical count`}
          end={<Badge>Count</Badge>} onClick={()=>onNavigate('restock')}/>)}
+       {uncountedProducts.slice(0,2).map(p=><RowItem key={p.id} title={p.name} detail="Finished product · physical count not verified" end={<Badge>Count</Badge>} onClick={()=>onNavigate('products')}/>)}
        {!firstActions&&<EmptyState title="No flagged actions" description="Counts and thresholds determine restocking alerts. Add production tasks to track ongoing work."/>}
        {firstActions>0&&<div className="card-footer">
-         <Button variant="secondary" onClick={()=>onNavigate('restock')}>Open stock & restocking <ArrowRight size={15}/></Button>
+         <Button variant="secondary" onClick={()=>onNavigate('restock')}>Verify ingredients <ArrowRight size={15}/></Button>
+         {uncountedProducts.length>0&&<Button variant="ghost" onClick={()=>onNavigate('products')}>Verify finished goods <ArrowRight size={15}/></Button>}
        </div>}
      </Card>
      <Card title="Production in progress" action={<Badge>{tasks.length} active</Badge>}>
