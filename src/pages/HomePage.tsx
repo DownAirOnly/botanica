@@ -1,47 +1,91 @@
-import {ArrowRight,AlertTriangle,Boxes,FlaskConical,Leaf,Package,Plus,ShoppingBasket} from 'lucide-react';
+import {ArrowRight,Boxes,ClipboardCheck,FlaskConical,Leaf,Package,PackagePlus,ShoppingCart,ShoppingBasket} from 'lucide-react';
 import {Badge,Button,Card,EmptyState,Metric,RowItem} from '../components/UI';
-import {lowStockItems} from '../domain/inventory';
+import {restockQueue,stockCountQueue,productionQueue,localDate,productionStepLabels} from '../domain/workflow';
+import {latestPriceQuote,quoteVendor} from '../domain/pricing';
 import {FORM_LABEL,FORM_UNIT,formatAmount,unitLabel,type PageId} from '../types';
 import {useAccount} from '../state/AccountContext';
 import {useApp} from '../state/AppContext';
+
 export function HomePage({onNavigate,onOpenHerb}:{onNavigate:(p:PageId)=>void;onOpenHerb:(id:string)=>void}){
  const {db}=useApp();const {active}=useAccount();
  if(active?.kind==='general')return <GeneralHome onNavigate={onNavigate}/>;
- const low=lowStockItems(db);const bulkEntries=Object.entries(db.bulk).filter(([,q])=>q>0);
+ const counts=stockCountQueue(db),restock=restockQueue(db),tasks=productionQueue(db);
+ const bulk=Object.entries(db.bulk).filter(([,amount])=>amount>0);
+ const today=localDate();
+ const readyTasks=tasks.filter(t=>t.step==='ready'||(t.dueOn&&t.dueOn<=today));
+ const firstActions=readyTasks.length+restock.length+counts.length;
  return <div className="content-stack">
-  <div className="intro"><div><span className="eyebrow">WORKSPACE SNAPSHOT</span><h2>Your herbal inventory, at a glance.</h2><p>Spot shortages, receive supplies, and make the next batch without opening multiple spreadsheets.</p></div></div>
-  <div className="metrics-grid"><Metric label="Herbs" value={db.herbs.length} meta="Catalog entries"/><Metric label="Low-stock alerts" value={low.length} meta="At or below set threshold"/><Metric label="Recipes" value={db.recipes.length} meta="Reusable formulas"/><Metric label="Finished units" value={db.products.reduce((a,p)=>a+p.count,0)} meta="Across package sizes"/></div>
-  <div className="quick-grid">
-    <button onClick={()=>onNavigate('herbs')}><Leaf size={20}/><strong>Browse herbs</strong><ArrowRight size={17}/></button>
-    <button onClick={()=>onNavigate('batches')}><FlaskConical size={20}/><strong>Make a batch</strong><ArrowRight size={17}/></button>
-    <button onClick={()=>onNavigate('products')}><Package size={20}/><strong>Package stock</strong><ArrowRight size={17}/></button>
-    <button onClick={()=>onNavigate('settings')}><Plus size={20}/><strong>Import inventory</strong><ArrowRight size={17}/></button>
-  </div>
-  <div className="two-columns">
-   <Card title="Needs attention" action={<Badge tone={low.length?'warning':'success'}>{low.length} alerts</Badge>}>
-    {!low.length?<EmptyState title="No reorder alerts" description="Set thresholds on herbs to receive low-stock alerts here."/>:low.slice(0,8).map(({herb,form,stock,threshold})=><RowItem key={herb.id+'-'+form} title={herb.name} detail={`${FORM_LABEL[form]} · Reorder at ${formatAmount(threshold)} ${unitLabel(FORM_UNIT[form])}`} end={<span className="text-warning">{formatAmount(stock)} <ArrowRight size={16}/></span>} onClick={()=>onOpenHerb(herb.id)}/>)}
-    {low.length>8&&<div className="card-footer"><Button variant="ghost" onClick={()=>onNavigate('herbs')}>See all herbs <ArrowRight size={15}/></Button></div>}
-   </Card>
-   <Card title="Production & stock" action={<Boxes size={19} className="muted-icon"/>}>
-    {bulkEntries.length?bulkEntries.map(([id,amount])=>{const r=db.recipes.find(x=>x.id===id);return <RowItem key={id} title={r?.name||'Unlinked bulk'} detail="Ready for packaging" end={<strong>{formatAmount(amount)} {r?unitLabel(r.kind==='tincture'?'fl_oz':'oz_wt'):'oz'}</strong>}/>;}):<EmptyState title="No unbottled mixtures" description="Finish a batch to add unbottled stock here."/>}
-    <div className="card-footer"><Button variant="secondary" onClick={()=>onNavigate('batches')}><FlaskConical size={16}/> Open production</Button></div>
-   </Card>
-  </div>
-  <div className="two-columns">
-   <Card title="Recent stock changes" action={<ShoppingBasket size={18} className="muted-icon"/>}>
-    {db.movements.length?db.movements.slice(0,5).map(m=><RowItem key={m.id} title={m.reason} detail={new Date(m.at).toLocaleDateString()} end={<span>{m.delta>0?'+':''}{formatAmount(m.delta)} {unitLabel(m.unit)}</span>}/>):<EmptyState title="No recorded movements" description="Purchases, adjustments, and batches appear here automatically."/>}
-   </Card>
-   <Card title="Build the habit" action={<AlertTriangle size={18} className="muted-icon"/>}>
-    <div className="guidance"><p><strong>1. Check stock.</strong> Confirm real opening counts rather than trusting old spreadsheets.</p><p><strong>2. Set reorder points.</strong> Identify critical herbs before they run out.</p><p><strong>3. Receive purchases.</strong> Record vendor and actual price once and let stock update automatically.</p><p><strong>4. Use recipes.</strong> Scale a formula, verify quantities, then record a batch.</p></div>
-   </Card>
-  </div>
+   <div className="intro"><div><span className="eyebrow">YOUR WORKSPACE</span><h2>What needs doing?</h2>
+     <p>Start with stock that needs a count, supplies to replenish, and work already underway. Catalog totals and history remain available in their sections.</p></div></div>
+   <div className="metrics-grid">
+     <Metric label="Physical counts to verify" value={counts.length} meta="Unverified ingredient forms"/>
+     <Metric label="Replenish" value={restock.length} meta="Confirmed low or empty items"/>
+     <Metric label="Production underway" value={tasks.length} meta="Open tasks"/>
+     <Metric label="Bulk ready to package" value={bulk.length} meta="Recorded bulk mixtures"/>
+   </div>
+   <div className="quick-grid">
+     <button onClick={()=>onNavigate('restock')}><ClipboardCheck size={20}/><strong>Check stock</strong><ArrowRight size={17}/></button>
+     <button onClick={()=>onNavigate('restock')}><ShoppingCart size={20}/><strong>Restock supplies</strong><ArrowRight size={17}/></button>
+     <button onClick={()=>onNavigate('batches')}><FlaskConical size={20}/><strong>Track production</strong><ArrowRight size={17}/></button>
+     <button onClick={()=>onNavigate('products')}><PackagePlus size={20}/><strong>Package products</strong><ArrowRight size={17}/></button>
+   </div>
+   <div className="two-columns">
+     <Card title="Needs attention" action={<Badge tone={firstActions?'warning':'success'}>{firstActions} to review</Badge>}>
+       {readyTasks.slice(0,3).map(t=><RowItem key={t.id}
+         title={t.name} detail={t.dueOn&&t.dueOn<=today?`Production target: ${t.dueOn}`:'Production ready for next step'}
+         end={<Badge tone="warning">Production</Badge>} onClick={()=>onNavigate('batches')}/>)}
+       {restock.slice(0,4).map(({herb,form,reason})=><RowItem key={herb.id+form}
+         title={herb.name} detail={`${FORM_LABEL[form]} · ${reason}`}
+         end={<Badge tone="warning">Replenish</Badge>} onClick={()=>onOpenHerb(herb.id)}/>)}
+       {counts.slice(0,4).map(({herb,form})=><RowItem key={herb.id+form}
+         title={herb.name} detail={`${FORM_LABEL[form]} · no verified physical count`}
+         end={<Badge>Count</Badge>} onClick={()=>onNavigate('restock')}/>)}
+       {!firstActions&&<EmptyState title="No flagged actions" description="Counts and thresholds determine restocking alerts. Add production tasks to track ongoing work."/>}
+       {firstActions>0&&<div className="card-footer">
+         <Button variant="secondary" onClick={()=>onNavigate('restock')}>Open stock & restocking <ArrowRight size={15}/></Button>
+       </div>}
+     </Card>
+     <Card title="Production in progress" action={<Badge>{tasks.length} active</Badge>}>
+       {tasks.length?tasks.slice(0,5).map(t=><RowItem key={t.id} title={t.name}
+         detail={t.dueOn?`${productionStepLabels[t.step]} · Target ${t.dueOn}`:productionStepLabels[t.step]}
+         end={<ArrowRight size={16}/>} onClick={()=>onNavigate('batches')}/>):
+         <EmptyState title="Nothing being tracked" description="Track a tincture being prepared, a mix that's waiting, or work that's ready to bottle."/>}
+       {bulk.length>0&&<div className="home-section-divider"><strong>Recorded bulk ready for packaging</strong>
+         {bulk.slice(0,4).map(([id,amount])=>{
+           const r=db.recipes.find(x=>x.id===id);
+           return <RowItem key={id} title={r?.name||'Unlinked bulk'} detail="Unpackaged mixture"
+             end={`${formatAmount(amount)} ${r?unitLabel(r.kind==='tincture'?'fl_oz':'oz_wt'):'oz'}`}
+             onClick={()=>onNavigate('products')}/>;
+         })}
+       </div>}
+       <div className="card-footer"><Button variant="secondary" onClick={()=>onNavigate('batches')}>
+         <FlaskConical size={16}/> View production</Button></div>
+     </Card>
+   </div>
+   <div className="two-columns">
+     <Card title="Shopping & restocking" action={<ShoppingBasket size={18} className="muted-icon"/>}>
+       {restock.length?restock.slice(0,6).map(({herb,form,value,threshold})=>{
+         const quote=form==='extract'?undefined:latestPriceQuote(db,herb.id,form);
+         return <RowItem key={herb.id+form} title={herb.name}
+           detail={`${FORM_LABEL[form]} · ${formatAmount(value)} ${unitLabel(FORM_UNIT[form])} counted${threshold>0?' · alert at '+formatAmount(threshold):''}`}
+           end={quote?<span>{quoteVendor(db,quote)} · $${quote.pricePerLb.toFixed(2)}/lb</span>:'Quote unavailable'}
+           onClick={()=>onNavigate('restock')}/>;
+       }):<EmptyState title="No confirmed restocking needs" description={counts.length?'Some ingredient quantities still need physical verification.':'Configure reorder thresholds on frequently used herbs.'}/>}
+       <div className="card-footer"><Button variant="ghost" onClick={()=>onNavigate('restock')}>Review restock list <ArrowRight size={15}/></Button></div>
+     </Card>
+     <Card title="Recent inventory activity" action={<Leaf size={18} className="muted-icon"/>}>
+       {db.movements.length?db.movements.slice(0,6).map(m=><RowItem key={m.id} title={m.reason}
+         detail={new Date(m.at).toLocaleDateString()} end={`${m.delta>0?'+':''}${formatAmount(m.delta)} ${unitLabel(m.unit)}`}/>):
+         <EmptyState title="No activity recorded" description="Physical counts, purchases, production, and packaging create a stock history."/>}
+       <div className="card-footer"><Button variant="ghost" onClick={()=>onNavigate('herbs')}><Leaf size={16}/> Browse ingredient catalog</Button></div>
+     </Card>
+   </div>
  </div>;
 }
-
 function GeneralHome({onNavigate}:{onNavigate:(p:PageId)=>void}){
  const {db}=useApp();const low=db.items.filter(i=>i.threshold>0&&i.quantity<=i.threshold);
  return <div className="content-stack"><div className="intro"><div><span className="eyebrow">WORKSPACE SNAPSHOT</span><h2>Your inventory, at a glance.</h2><p>Organize items, check quantities, and find what needs restocking.</p></div></div>
  <div className="metrics-grid compact"><Metric label="Catalog items" value={db.items.length}/><Metric label="Low stock" value={low.length}/><Metric label="Recorded changes" value={db.movements.filter(m=>m.kind==='generic').length}/></div>
- <div className="quick-grid"><button onClick={()=>onNavigate('items')}><Boxes size={20}/><strong>Manage items</strong><ArrowRight size={17}/></button><button onClick={()=>onNavigate('settings')}><Plus size={20}/><strong>Backups & settings</strong><ArrowRight size={17}/></button></div>
- <Card title="Needs attention" action={<Badge tone={low.length?'warning':'success'}>{low.length} alerts</Badge>}>{low.length?low.map(i=><RowItem key={i.id} title={i.name} detail={`Reorder at ${formatAmount(i.threshold)} ${unitLabel(i.unit)}`} end={`${formatAmount(i.quantity)} ${unitLabel(i.unit)}`} onClick={()=>onNavigate('items')}/>):<EmptyState title="No reorder alerts" description="Set thresholds on your items to see shortages here."/>}</Card></div>
+ <div className="quick-grid"><button onClick={()=>onNavigate('items')}><Boxes size={20}/><strong>Manage items</strong><ArrowRight size={17}/></button><button onClick={()=>onNavigate('settings')}><Package size={20}/><strong>Backups & settings</strong><ArrowRight size={17}/></button></div>
+ <Card title="Needs attention" action={<Badge tone={low.length?'warning':'success'}>{low.length} alerts</Badge>}>{low.length?low.map(i=><RowItem key={i.id} title={i.name} detail={`Reorder at ${formatAmount(i.threshold)} ${unitLabel(i.unit)}`} end={`${formatAmount(i.quantity)} ${unitLabel(i.unit)}`} onClick={()=>onNavigate('items')}/>):<EmptyState title="No reorder alerts" description="Set thresholds on your items to see shortages here."/>}</Card></div>;
 }
