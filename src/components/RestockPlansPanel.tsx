@@ -2,7 +2,7 @@ import {useState} from 'react';
 import {CalendarClock,CheckCircle2,ClipboardCheck,Pause,Play,Plus} from 'lucide-react';
 import {Badge,Button,Card,EmptyState,Field,Modal,RowItem,SelectField} from './UI';
 import {cadenceLabels,restockReviewQueue,reviewRestockPlan,
-  reviewResultLabels,saveRestockPlan} from '../domain/restockPlans';
+  reviewResultLabels,saveRestockPlan,pendingRestockFollowups,resolveRestockFollowup} from '../domain/restockPlans';
 import {localDate} from '../domain/workflow';
 import {FORM_LABEL,formatAmount,type HerbRestockPlan,type RestockCadence,
   type RestockReviewResult} from '../types';
@@ -21,6 +21,7 @@ export function RestockPlansPanel(){
  const queue=restockReviewQueue(db),today=localDate();
  const due=queue.filter(x=>x.due);
  const paused=db.restockPlans.filter(p=>!p.active);
+ const pending=pendingRestockFollowups(db);
  const sorted=[...queue.map(x=>x.plan),...paused];
  const reviewing=db.restockPlans.find(p=>p.id===reviewId);
  function edit(plan?:HerbRestockPlan){
@@ -42,6 +43,12 @@ export function RestockPlansPanel(){
    try{
      const next=saveRestockPlan(db,{...plan,active:!plan.active});
      setDB(()=>next);notify(plan.active?'Review schedule paused.':'Review schedule resumed.');
+   }catch(e){reportError(e);}
+ }
+ function resolve(reviewId:string){
+   try{
+     const next=resolveRestockFollowup(db,reviewId);
+     setDB(()=>next);notify('Follow-up marked addressed. No purchase or stock movement was created.');
    }catch(e){reportError(e);}
  }
  function startReview(id:string){setReviewId(id);setResult('consider_order');setReviewNotes('');}
@@ -88,12 +95,21 @@ export function RestockPlansPanel(){
        </div>;
      })}
    </Card>
+   {pending.length>0&&<Card title="Follow-ups awaiting action" action={<Badge tone="warning">{pending.length} open</Badge>}>
+     <p className="hint">You marked these reviews as needing an order or another action. They stay here until you mark them addressed. Receiving actual stock must still be recorded separately.</p>
+     {pending.map(r=><div className="restock-plan-row" key={r.id}>
+       <div className="row-main"><strong>{db.herbs.find(h=>h.id===r.herbId)?.name||'Herb'} · {FORM_LABEL[r.form]}</strong>
+         <small>Reviewed {r.reviewedOn}{r.notes?' · '+r.notes:''}</small></div>
+       <Button size="sm" variant="secondary" onClick={()=>resolve(r.id)}>
+         <CheckCircle2 size={15}/> Mark addressed</Button>
+     </div>)}
+   </Card>}
    <Card title="Recent review decisions" action={<CalendarClock size={18} className="muted-icon"/>}>
      {db.restockReviews.length?db.restockReviews.slice(0,8).map(r=>{
        const herb=db.herbs.find(h=>h.id===r.herbId);
        return <RowItem key={r.id} title={herb?.name||'Unknown herb'}
          detail={r.reviewedOn+' · '+FORM_LABEL[r.form]+(r.notes?' · '+r.notes:'')}
-         end={reviewResultLabels[r.result]}/>;
+         end={r.resolvedOn?'Addressed '+r.resolvedOn:reviewResultLabels[r.result]}/>;
      }):<EmptyState title="No reviews recorded" description="Reviews appear here once you confirm whether an order or follow-up is needed."/>}
    </Card>
    {draft&&<Modal title={draft.id?'Edit restock schedule':'Schedule restock review'}
