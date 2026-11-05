@@ -49,7 +49,7 @@ export function validateBackup(value:unknown):BotanicaDB {
         (p.targetQuantityOz!==undefined&&(!Number.isFinite(p.targetQuantityOz)||p.targetQuantityOz<=0))||
         typeof p.createdAt!=='string'||typeof p.updatedAt!=='string')||
       v.restockReviews.some(r=>!r||typeof r.id!=='string'||typeof r.planId!=='string'||
-        !['consider_order','no_order_needed'].includes(r.result)||typeof r.reviewedOn!=='string'))
+        !['consider_order','no_order_needed'].includes(r.result)||typeof r.reviewedOn!=='string'||(r.resolvedOn!==undefined&&typeof r.resolvedOn!=='string')))
       throw new Error('Invalid recurring restock plan history.');
     return v as BotanicaDB;
   }
