@@ -68,3 +68,13 @@ The app supports importing exported schema v1 JSON backups; migration adds the n
 - `herbRestockNotes` records historical date and optional supplier without modifying stock or inventing purchase prices. Displayed latest restock compares real purchases and historical notes.
 - `Herb.currentStockSource` records a user's explicit supplier-source annotation per dry/powder form. It is **not** lot-level inventory proof, cannot determine exact current quantities by supplier, and is cleared when a different vendor is received.
 - Pre-v5 backups migrate without inferring container assignments, stock counts, unknown herb sources, or any product run. Underlying Firestore workspace document remains single revisioned JSON with a 750KB guard.
+
+## v8 (schema v6) — optional calendar reviews and recorded production metrics
+
+- `restockPlans` and `restockReviews` are private workspace arrays initialized empty on migration. No schedules are inferred from past purchases or supplier-price quotes.
+- Each `HerbRestockPlan` references one stable herb ID and a dry/powder form with weekly, biweekly, monthly, or quarterly cadence, `nextReviewOn` and optional supplier, reference order quantity and notes. The month-day anchor is retained for dates such as the 31st, with short months clamped to the last valid day.
+- `reviewRestockPlan` records a dated decision, advances the due date past today, and **does not** create a purchase, receipt, purchase obligation, invoice, or stock movement. An order-needed decision remains outstanding until `resolveRestockFollowup` explicitly marks it addressed. Acknowledgment is not evidence of an actual purchase.
+- `productionEvents` is a read-only reporting projection built from completed `batches`, positive extract-output `movements`, `productionRuns`, and pre-run positive product packaging movements. Packaging movements linked to existing productionRun IDs are excluded, preventing duplicate count of finished units.
+- Tincture batch volume (fl oz), single-herb extract output (fl oz), tea batch weight (oz wt), and finished product units are **different metrics**, not combinable. Graphs include zero-activity periods and never infer sales or profitability from production.
+- Versioned JSON restores from v1–v5 migrate to schema v6 without changing physical quantities or adding inferred dated activity. This does not increase Firestore's per-document budget.
+
