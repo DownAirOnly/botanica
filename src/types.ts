@@ -1,4 +1,4 @@
-export const DB_VERSION = 5 as const;
+export const DB_VERSION = 6 as const;
 export type StockForm = 'dry' | 'powder' | 'extract';
 export type FormulaKind = 'tincture' | 'tea';
 export type ItemKind = 'ingredient' | 'bulk' | 'product' | 'container' | 'generic';
@@ -56,6 +56,18 @@ export interface ProductionRun {
   count:number;packageOz:number;source:MakeProductSource;containerSupplyId:string;
   containerName:string;bulkUsedOz:number;ingredients:BatchIngredient[];
 }
+export type RestockCadence='weekly'|'biweekly'|'monthly'|'quarterly';
+export type RestockReviewResult='consider_order'|'no_order_needed';
+/** A calendar review schedule, never an automatic order or stock adjustment. */
+export interface HerbRestockPlan {
+  id:string;herbId:string;form:'dry'|'powder';cadence:RestockCadence;
+  nextReviewOn:string;active:boolean;vendorId?:string;targetQuantityOz?:number;
+  notes?:string;createdAt:string;updatedAt:string;
+}
+export interface HerbRestockReview {
+  id:string;planId:string;herbId:string;form:'dry'|'powder';
+  reviewedOn:string;result:RestockReviewResult;notes?:string;
+}
 export type ProductionStep = 'planned'|'preparing'|'waiting'|'ready'|'done';
 /** A production checklist item; never changes quantities by itself. */
 export interface ProductionTask {
@@ -73,6 +85,7 @@ export interface BotanicaDB {
   recipes: Recipe[]; batches: Batch[]; products: Product[]; productionTasks: ProductionTask[];
   packagingSupplies:PackagingSupply[];packagingReceipts:PackagingReceipt[];
   productionRuns:ProductionRun[];herbRestockNotes:HerbRestockNote[];
+  restockPlans:HerbRestockPlan[];restockReviews:HerbRestockReview[];
   bulk: Record<string, number>; movements: StockMovement[];
   updatedAt: string;
 }
