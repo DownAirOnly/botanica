@@ -7,7 +7,7 @@ import {restockQueue,stockCountQueue} from '../domain/workflow';
 import {FORM_LABEL,FORM_UNIT,formatAmount,makeId,unitLabel,type Purchase,type StockForm} from '../types';
 import {useApp} from '../state/AppContext';
 
-export function RestockPage({onBack,onOpenHerb,initialTab}:{onBack:()=>void;onOpenHerb:(id:string)=>void;initialTab:'verify'|'reorder'}){
+export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBack:()=>void;onOpenHerb:(id:string)=>void;initialTab:'verify'|'reorder';embedded?:boolean}){
  const {db,setDB,notify,reportError}=useApp();
  const [tab,setTab]=useState<'verify'|'reorder'>(initialTab);
  const [query,setQuery]=useState('');
@@ -57,7 +57,7 @@ export function RestockPage({onBack,onOpenHerb,initialTab}:{onBack:()=>void;onOp
  const countedHerb=countTarget&&db.herbs.find(h=>h.id===countTarget.herbId);
  const receivingHerb=receiveTarget&&db.herbs.find(h=>h.id===receiveTarget.herbId);
  return <div className="content-stack">
-   <div className="page-heading"><div><button className="back-link" onClick={onBack}><ArrowLeft size={16}/> Home</button><h2>Stock & restocking</h2>
+   <div className="page-heading"><div>{!embedded&&<button className="back-link" onClick={onBack}><ArrowLeft size={16}/> Back</button>}<h2>Check & restock</h2>
      <p>Check what is physically present, then work from a reliable supplier list.</p></div></div>
    <div className="metrics-grid compact">
      <div className="metric"><span className="metric-label">Needs physical count</span><strong className="metric-value">{unchecked.length}</strong><small className="metric-meta">Ingredient forms not yet verified</small></div>
