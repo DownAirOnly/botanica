@@ -46,7 +46,7 @@ export function InventoryHub({section,onSectionChange,restockTab,selectedHerb,on
  restockTab:'verify'|'reorder';selectedHerb:string|null;onSelectHerb:(id:string|null)=>void;
  onOpenRestock:(tab:'verify'|'reorder')=>void;onMakeProduct:(id:string)=>void;
 }){
- const {db}=useApp();const count=stockCountQueue(db).length+db.products.filter(p=>!p.countCheckedAt).length;
+ const {db}=useApp();const count=stockCountQueue(db).length+db.products.filter(p=>!p.countCheckedAt).length+db.packagingSupplies.filter(p=>!p.countCheckedAt).length;
  const reorder=restockQueue(db).length;
  return <div className="workspace-hub">
   <div className="workspace-hub-top"><div><span className="eyebrow">STOCK & SUPPLIES</span>
