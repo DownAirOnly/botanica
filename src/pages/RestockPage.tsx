@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {ArrowLeft,ClipboardCheck,PackagePlus,Search,ShoppingCart} from 'lucide-react';
-import {Badge,Button,Card,EmptyState,Field,Modal,RowItem,Tabs} from '../components/UI';
+import {Button,Card,EmptyState,Field,Modal,Tabs} from '../components/UI';
 import {adjustStock,ensureVendor,receivePurchase} from '../domain/inventory';
 import {quoteVendor,latestPriceQuote} from '../domain/pricing';
 import {restockQueue,stockCountQueue} from '../domain/workflow';
