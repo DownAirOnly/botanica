@@ -57,7 +57,7 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
    </div>
    <div className="today-main-grid">
      <Card className="today-action-card" title="Needs your attention"
-       action={<Badge tone={urgent?'warning':'neutral'}>{urgent} ready or low</Badge>}>
+       action={<Badge tone={urgent?'warning':'neutral'}>{urgent} to review</Badge>}>
        {due.slice(0,3).map(t=><RowItem key={t.id} title={t.name}
          detail={t.dueOn&&t.dueOn<=today?`Production target ${t.dueOn}`:productionStepLabels[t.step]}
          end={<Badge tone="warning">Production</Badge>} onClick={()=>onNavigate('work')}/>)}
