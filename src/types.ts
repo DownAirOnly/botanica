@@ -31,7 +31,7 @@ export interface PriceQuote {
 export interface Purchase {
   id: string; herbId: string; vendorId: string; form: 'dry' | 'powder';
   quantityOz: number; pricePerLb: number; shipping: number;
-  date: string; notes?: string;
+  date: string; receivedTime?:string; notes?: string;
 }
 export interface RecipeIngredient { herbId: string; form: StockForm; parts: number; }
 export interface Recipe { id: string; name: string; kind: FormulaKind; ingredients: RecipeIngredient[]; notes?: string; active: boolean; }
@@ -47,7 +47,7 @@ export interface PackagingReceipt {
   id:string;supplyId:string;quantity:number;vendor?:string;date:string;notes?:string;
 }
 export interface HerbRestockNote {
-  id:string;herbId:string;form:'dry'|'powder';date:string;vendorId?:string;notes?:string;
+  id:string;herbId:string;form:'dry'|'powder';date:string;time?:string;vendorId?:string;notes?:string;
   /** Historical note only — not a stock receipt. */
 }
 export type MakeProductSource='bulk'|'ingredients';
