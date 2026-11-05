@@ -1,5 +1,6 @@
 export const DB_VERSION = 6 as const;
 export type StockForm = 'dry' | 'powder' | 'extract';
+export type RestockTab = 'verify'|'reorder'|'schedule';
 export type FormulaKind = 'tincture' | 'tea';
 export type ItemKind = 'ingredient' | 'bulk' | 'product' | 'container' | 'generic';
 export type GeneralUnit = 'units' | 'g' | 'kg' | 'oz_wt' | 'lb' | 'ml' | 'fl_oz' | 'l';
@@ -61,7 +62,7 @@ export type RestockReviewResult='consider_order'|'no_order_needed';
 /** A calendar review schedule, never an automatic order or stock adjustment. */
 export interface HerbRestockPlan {
   id:string;herbId:string;form:'dry'|'powder';cadence:RestockCadence;
-  nextReviewOn:string;active:boolean;vendorId?:string;targetQuantityOz?:number;
+  nextReviewOn:string;anchorDay?:number;active:boolean;vendorId?:string;targetQuantityOz?:number;
   notes?:string;createdAt:string;updatedAt:string;
 }
 export interface HerbRestockReview {
