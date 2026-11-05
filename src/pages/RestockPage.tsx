@@ -21,7 +21,7 @@ export function RestockPage({onBack,onOpenHerb}:{onBack:()=>void;onOpenHerb:(id:
  const visibleRestock=restock.filter(x=>matches(x.herb.name));
  function beginCount(herbId:string,form:StockForm){
    const h=db.herbs.find(x=>x.id===herbId);if(!h)return;
-   setCountTarget({herbId,form});setCountQty(String(h.stock[form]));setCountReason('Physical count confirmed');
+   setCountTarget({herbId,form});setCountQty('');setCountReason('Physical count confirmed');
  }
  function applyCount(){
    if(!countTarget)return;
