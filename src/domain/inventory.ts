@@ -34,7 +34,9 @@ export function receivePurchase(db:BotanicaDB,p:Purchase):BotanicaDB {
   const h=herbById(db,p.herbId),before=h.stock[p.form],after=before+p.quantityOz;
   const vendorName=db.vendors.find(v=>v.id===p.vendorId)!.name;
   const received=updated({...db,purchases:[p,...db.purchases],
-    herbs:db.herbs.map(x=>x.id===h.id?{...x,stock:{...x.stock,[p.form]:after}}:x),
+    herbs:db.herbs.map(x=>x.id===h.id?{...x,stock:{...x.stock,[p.form]:after},
+      currentStockSource:x.currentStockSource?.[p.form]&&x.currentStockSource[p.form]?.vendorId!==p.vendorId
+        ?{...x.currentStockSource,[p.form]:undefined}:x.currentStockSource}:x),
     movements:[movement('purchase','ingredient',h.id,before,after,FORM_UNIT[p.form],
       `Received from ${vendorName}`,p.form,p.id),...db.movements]});
   // A received purchase is a real paid unit price, recorded distinctly from supplier quotes.
