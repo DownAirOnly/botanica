@@ -1,5 +1,18 @@
 # Changelog
 
+## v8 — 2026-11-05 (recurring restock reviews and production insights)
+
+- Added an **opt-in Schedule** tab under Inventory → Check & Restock. Choose a dry/powder herb, first review date, and weekly / every-two-weeks / monthly / quarterly cadence. Record supplier and reference order quantity if useful.
+- Reviews are **in-app, on-device when opening Botanica**, not push notifications or automatic purchases. They remain independent of real inventory, actual receipts, and verified low-stock alerts.
+- Completing a review logs an explicit decision and advances the date to the next future occurrence. A “needs order / follow-up” decision stays visible on Today and Schedule until explicitly marked addressed; marking addressed has no stock effect.
+- Added **Production → History**: separated tincture batches (fl oz), single-herb extractions (fl oz), tea batches (oz wt), and finished units, with 8-week / 6-month chart views, per-period averages, top quantities and recent events.
+- The history includes recorded legacy packaging where available and excludes product movements already represented by a linked Make Product run, avoiding duplicate counts. It never claims that production quantity equals sales, demand, or unverified historical workbook output.
+- Today now surfaces due restock reviews, unresolved order follow-ups, and current-month recorded tincture volume and finished units.
+- Data schema advances from v5 to v6, preserving existing cloud workspaces, recipes, source notes, purchase receipts, containers, ledgers and backup data. Old v1–v5 backups migrate with empty optional review plans and review history.
+- No private spreadsheet or supplier record was committed.
+
+
+
 ## v7 — 2026-11-05 (connected making and packaging supplies)
 
 - Seeded 15 named packaging types (amber bottles, spray bottles, salve tins, tea bags, plastic bottles), with zero opening stock **unverified**; existing business data and stock quantities are not changed.
