@@ -6,11 +6,9 @@ import {RecipesPage} from './pages/RecipesPage';
 import {BatchesPage} from './pages/BatchesPage';
 import {ProductsPage} from './pages/ProductsPage';
 import {ItemsPage} from './pages/ItemsPage';
-import {useAccount} from './state/AccountContext';
 import {SettingsPage} from './pages/SettingsPage';
 import {type PageId} from './types';
 export default function App(){
- const {active}=useAccount();
  const [page,setPage]=useState<PageId>('home');
  const [herb,setHerb]=useState<string|null>(null);
  const [batchRecipe,setBatchRecipe]=useState<string|null>(null);
