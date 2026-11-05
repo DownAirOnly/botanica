@@ -17,7 +17,7 @@ export function Shell({page,onNavigate,children}:{page:PageId;onNavigate:(id:Pag
      <nav aria-label="Main navigation" className="sidebar-links">
        {NAV.map(([id,label,Icon])=><button key={id} onClick={()=>to(id)} className={id===page?'nav-link active':'nav-link'} aria-current={id===page?'page':undefined}><Icon size={20}/>{label}</button>)}
      </nav>
-     <div className="sidebar-bottom"><button className="nav-link" onClick={()=>{if(safeLeave())choose(null);}}><ChevronsUpDown size={20}/> Switch workspace</button><button className="nav-link" onClick={()=>{if(safeLeave())void logout();}}><LogOut size={20}/> Sign out</button><button className={page==='settings'?'nav-link active':'nav-link'} onClick={()=>to('settings')}><Settings size={20}/>Settings</button><span className="version">Botanica v2 · {user?.email||'Signed in'}</span></div>
+     <div className="sidebar-bottom"><button className="nav-link" onClick={()=>{if(safeLeave())choose(null);}}><ChevronsUpDown size={20}/> Switch workspace</button><button className="nav-link" onClick={()=>{if(safeLeave())void logout();}}><LogOut size={20}/> Sign out</button><button className={page==='settings'?'nav-link active':'nav-link'} onClick={()=>to('settings')}><Settings size={20}/>Settings</button><span className="version">Botanica v3 · {user?.email||'Signed in'}</span></div>
    </aside>
    {open&&<button className="sidebar-scrim" aria-label="Close menu" onClick={()=>setOpen(false)}/>}
    <div className="main-area">
