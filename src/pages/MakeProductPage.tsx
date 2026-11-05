@@ -1,15 +1,15 @@
 import {useState} from 'react';
-import {AlertCircle,ArrowRight,CheckCircle2,FlaskConical,PackageCheck,ShoppingCart} from 'lucide-react';
+import {AlertCircle,ArrowRight,CheckCircle2,PackageCheck,ShoppingCart} from 'lucide-react';
 import {Badge,Button,Card,EmptyState,Field,RowItem,SelectField,Tabs} from '../components/UI';
 import {makeFinishedProduct,previewMakeProduct,type MakePreview} from '../domain/making';
 import {useApp} from '../state/AppContext';
 import {formatAmount,unitLabel,RECIPE_UNIT,type MakeProductSource} from '../types';
 
-export function MakeProductPage({onEditProduct,onPackaging}:{
- onEditProduct:()=>void;onPackaging:()=>void;
+export function MakeProductPage({onEditProduct,onPackaging,selectedProductId}:{
+ onEditProduct:()=>void;onPackaging:()=>void;selectedProductId:string|null;
 }){
  const {db,setDB,notify,reportError}=useApp();
- const [productId,setProductId]=useState(''),[count,setCount]=useState('1');
+ const [productId,setProductId]=useState(selectedProductId||''),[count,setCount]=useState('1');
  const [source,setSource]=useState<MakeProductSource>('ingredients');
  const [query,setQuery]=useState('');
  const product=db.products.find(x=>x.id===productId);
