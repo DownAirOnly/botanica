@@ -43,7 +43,7 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
      </button>
      <button className="today-stat" onClick={()=>onNavigate('bottling')}>
        <span><PackageCheck size={20}/><strong>{bulk.length}</strong></span>
-       <span>Bulk mixtures</span><small>Ready to package</small>
+       <span>Unpackaged bulk</span><small>Recorded mixtures</small>
      </button>
    </div>
    <div className="today-main-grid">
@@ -75,11 +75,11 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
          <div className="card-footer"><Button variant="secondary" onClick={()=>onNavigate('work')}>
            View production <ArrowRight size={15}/></Button></div>
        </Card>
-       <Card title="Ready to bottle">
+       <Card title="Unpackaged bulk">
          {bulk.length?bulk.slice(0,4).map(([id,amount])=>{
            const recipe=db.recipes.find(r=>r.id===id);
            return <RowItem key={id} title={recipe?.name||'Unlinked mixture'}
-             detail="Recorded bulk" end={`${formatAmount(amount)} ${recipe?unitLabel(recipe.kind==='tincture'?'fl_oz':'oz_wt'):'oz'}`}
+             detail="Recorded mixture" end={`${formatAmount(amount)} ${recipe?unitLabel(recipe.kind==='tincture'?'fl_oz':'oz_wt'):'oz'}`}
              onClick={()=>onNavigate('bottling')}/>;
          }):<EmptyState title="No bulk waiting" description="Completed batches will appear here."/>}
          <div className="card-footer"><Button variant="ghost" onClick={()=>onNavigate('bottling')}>
