@@ -135,6 +135,7 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
    <SelectField label="Purchased form" value={pForm} onChange={e=>{const selectedForm=e.target.value as 'dry'|'powder';setPForm(selectedForm);const q=latestPriceQuote(db,herb.id,selectedForm);setPPrice(q?String(q.pricePerLb):'');if(q)setPVendor(quoteVendor(db,q));}}><option value="dry">Dried herb · oz weight</option><option value="powder">Powder · oz weight</option></SelectField>
    <div className="form-grid"><Field label="Quantity (oz wt)" type="number" min="0" step="any" value={pQty} onChange={e=>setPQty(e.target.value)}/><Field label="Price per pound ($)" type="number" min="0" step="any" value={pPrice} onChange={e=>setPPrice(e.target.value)}/></div>
    <div className="form-grid"><Field label="Shipping / extra cost ($)" type="number" min="0" step="any" value={pShipping} onChange={e=>setPShipping(e.target.value)}/><Field label="Received date" type="date" value={pDate} onChange={e=>setPDate(e.target.value)}/></div>
+   <Field label="Received time (optional)" type="time" value={pTime} onChange={e=>setPTime(e.target.value)}/>
    <p className="cost-preview">Total cost: <strong>{pPrice&&pQty&&pShipping!==''&&Number(pPrice)>=0&&Number(pQty)>0?`$${(Number(pQty)/16*Number(pPrice)+Number(pShipping)).toFixed(2)}`:'—'}</strong></p>
   </Modal>}
   {extract&&<Modal title="Record tincture extraction" onClose={()=>setExtract(false)} footer={<><Button variant="ghost" onClick={()=>setExtract(false)}>Cancel</Button><Button onClick={applyExtract}>Record extraction</Button></>}>
