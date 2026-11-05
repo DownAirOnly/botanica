@@ -5,6 +5,7 @@ import {adjustStock,ensureVendor,extractStock,receivePurchase,saveHerb,lowStockI
 import {FORM_LABEL,FORM_UNIT,FORMS,formatAmount,makeId,unitLabel,zeroStock,zeroThresholds,type Herb,type StockForm,type Purchase} from '../types';
 import {useApp} from '../state/AppContext';
 import {CostsPanel,CostsSummary} from '../components/Pricing';
+import {latestPriceQuote,quoteVendor} from '../domain/pricing';
 
 export function HerbsPage({selected,onSelect}:{selected:string|null;onSelect:(id:string|null)=>void}){
  const {db,setDB,notify,reportError}=useApp();const [query,setQuery]=useState('');const [filter,setFilter]=useState<'all'|'low'>('all');const [create,setCreate]=useState(false);const [name,setName]=useState('');
@@ -72,7 +73,7 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
   </Modal>}
   {buy&&<Modal title="Receive purchase" onClose={()=>setBuy(false)} footer={<><Button variant="ghost" onClick={()=>setBuy(false)}>Cancel</Button><Button onClick={applyBuy}><ShoppingCart size={16}/> Receive stock</Button></>}>
    <Field label="Supplier name" value={pVendor} onChange={e=>setPVendor(e.target.value)} placeholder="Preferred supplier"/>
-   <SelectField label="Purchased form" value={pForm} onChange={e=>setPForm(e.target.value as 'dry'|'powder')}><option value="dry">Dried herb · oz weight</option><option value="powder">Powder · oz weight</option></SelectField>
+   <SelectField label="Purchased form" value={pForm} onChange={e=>{const selectedForm=e.target.value as 'dry'|'powder';setPForm(selectedForm);const q=latestPriceQuote(db,herb.id,selectedForm);setPPrice(q?String(q.pricePerLb):'');if(q)setPVendor(quoteVendor(db,q));}}><option value="dry">Dried herb · oz weight</option><option value="powder">Powder · oz weight</option></SelectField>
    <div className="form-grid"><Field label="Quantity (oz wt)" type="number" min="0" step="any" value={pQty} onChange={e=>setPQty(e.target.value)}/><Field label="Price per pound ($)" type="number" min="0" step="any" value={pPrice} onChange={e=>setPPrice(e.target.value)}/></div>
    <div className="form-grid"><Field label="Shipping / extra cost ($)" type="number" min="0" step="any" value={pShipping} onChange={e=>setPShipping(e.target.value)}/><Field label="Received date" type="date" value={pDate} onChange={e=>setPDate(e.target.value)}/></div>
    <p className="cost-preview">Total cost: <strong>{pPrice&&pQty&&pShipping!==''&&Number(pPrice)>=0&&Number(pQty)>0?`$${(Number(pQty)/16*Number(pPrice)+Number(pShipping)).toFixed(2)}`:'—'}</strong></p>
