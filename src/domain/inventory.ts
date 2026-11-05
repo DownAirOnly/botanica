@@ -109,7 +109,7 @@ export function adjustProductStock(db:BotanicaDB,productId:string,mode:'add'|'us
  if(!reason.trim())throw new StockError('A reason is required.');
  const before=p.count,after=mode==='set'?amount:mode==='add'?before+amount:before-amount;
  if(after<0)throw new StockError('Not enough units available.');
- return updated({...db,products:db.products.map(x=>x.id===p.id?{...x,count:after}:x),movements:[movement('adjustment','product',p.id,before,after,'units',reason),...db.movements]});
+ return updated({...db,products:db.products.map(x=>x.id===p.id?{...x,count:after,countCheckedAt:mode==='set'?new Date().toISOString():x.countCheckedAt}:x),movements:[movement('adjustment','product',p.id,before,after,'units',reason),...db.movements]});
 }
 export function adjustBulkStock(db:BotanicaDB,recipeId:string,mode:'add'|'use'|'set',amount:number,reason:string):BotanicaDB {
  const r=db.recipes.find(x=>x.id===recipeId);if(!r)throw new StockError('Linked recipe not found.');
