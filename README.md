@@ -11,8 +11,8 @@ The app is designed to replace loose spreadsheets, handwritten stock lists and r
 The app uses three primary work areas instead of separate navigation tabs for each data type:
 
 - **Today:** prioritized stock checks, due restock reviews and outstanding follow-ups, production-in-progress, recorded bulk, current-month production snapshots, and one-tap shortcuts.
-- **Inventory:** contextual sections for physical checks, confirmed shortages, optional recurring herb restock reviews, herbs and supplier costs, 15 packaging supply types with physical counts, and finished goods with formula/container assignment.
-- **Production:** contextual sections for ongoing tasks, editable recipes, measured batch creation, one-step Make Product from prepared bulk or individual formula ingredients, and weekly/monthly production history charts.
+- **Inventory:** contextual sections for physical checks, confirmed shortages, optional recurring herb restock reviews with a direct handoff to recorded receipts, herbs and supplier costs, 15 packaging supply types with physical counts, and finished goods with formula/container assignment.
+- **Production:** contextual sections for ongoing tasks, editable recipes, measured batch creation, one-step Make Product from prepared bulk or individual formula ingredients, and weekly/monthly production history charts with product filters, period drilldowns and private CSV export.
 
 
 - Keep separate quantities for dried herbs, powders and ready-made liquid extracts. Weight and volume are never silently treated as interchangeable.
@@ -55,7 +55,7 @@ Follow **[Firebase setup](docs/FIREBASE_SETUP.md)** before entering business dat
 - **React + TypeScript + Vite**, with shared UI components and CSS tokens.
 - Firebase Google Authentication, Firestore owner-only workspaces and optimistic revision checks.
 - Domain functions manage stock math, purchase receipt, recipe scaling, batch production and packaging; UI components do not directly manipulate inventory balances.
-- **Whole-number releases** (v1–v8). README stays descriptive; changes go in `CHANGELOG.md`.
+- **Whole-number releases** (v1–v9). README stays descriptive; changes go in `CHANGELOG.md`.
 - `docs/PROJECT_CONTEXT.md` is the authoritative conversation-handoff file. Update it whenever the scope, architecture or open decisions change.
 
 ## Security and current limitations
