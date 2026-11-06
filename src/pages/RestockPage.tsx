@@ -112,17 +112,7 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
      <p className="hint">Enter actual received quantities and paid prices. A schedule's reference quantity or a supplier's old quote does not automatically become a receipt. Receiving stock does not certify the previous physical count or close an outstanding follow-up.</p>
      {referenceQty!==undefined&&<p className="hint">Scheduled reference quantity: {formatAmount(referenceQty)} oz wt (not entered as received)</p>}
      {(()=>{const quote=latestPriceQuote(db,receiveTarget.herbId,receiveTarget.form);
-       return quote?<p className="hint">Last recorded supplier quote: {'</p>:null;})()}
-     <Field label="Supplier" value={supplier} onChange={e=>setSupplier(e.target.value)}/>
-     <div className="form-grid"><Field label="Received quantity (oz wt)" type="number" step="any" min="0.001" value={quantity} onChange={e=>setQuantity(e.target.value)}/>
-       <Field label="Actual price / lb ($)" type="number" step="any" min="0" value={price} onChange={e=>setPrice(e.target.value)}/></div>
-     <div className="form-grid"><Field label="Shipping ($)" type="number" step="any" min="0" value={shipping} onChange={e=>setShipping(e.target.value)}/>
-       <Field label="Received on" type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
-       <Field label="Received time (optional)" type="time" value={time} onChange={e=>setTime(e.target.value)}/>
-   </Modal>}
- </div>;
-}
-+quote.pricePerLb.toFixed(2)+'/lb'} (reference only)</p>:null;})()}
+       return quote?<p className="hint">Last recorded supplier quote: {quote.pricePerLb.toFixed(2)} USD per lb (reference only)</p>:null;})()}
      <Field label="Supplier" value={supplier} onChange={e=>setSupplier(e.target.value)}/>
      <div className="form-grid"><Field label="Received quantity (oz wt)" type="number" step="any" min="0.001" value={quantity} onChange={e=>setQuantity(e.target.value)}/>
        <Field label="Actual price / lb ($)" type="number" step="any" min="0" value={price} onChange={e=>setPrice(e.target.value)}/></div>
