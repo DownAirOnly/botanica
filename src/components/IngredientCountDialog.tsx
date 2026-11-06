@@ -16,7 +16,7 @@ export function IngredientCountDialog({herbId,form,onClose}:{
   try{
    if(!quantity.trim())throw new Error('Enter the amount physically present, including zero.');
    const next=adjustStock(db,herbId,form,'set',Number(quantity),'Physical count confirmed');
-   setDB(()=>next);notify(`Count recorded for ${herb.name}.`);onClose();
+   setDB(()=>next);notify('Ingredient physical count verified.');onClose();
   }catch(e){reportError(e);}
  }
  return <Modal title={`Count ${herb.name}`} onClose={onClose}
