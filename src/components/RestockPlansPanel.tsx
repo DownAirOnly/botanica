@@ -3,7 +3,7 @@ import {CalendarClock,CheckCircle2,ClipboardCheck,Pause,Play,Plus} from 'lucide-
 import {Badge,Button,Card,EmptyState,Field,Modal,RowItem,SelectField} from './UI';
 import {cadenceLabels,restockReviewQueue,reviewRestockPlan,
   reviewResultLabels,saveRestockPlan,pendingRestockFollowups,resolveRestockFollowup} from '../domain/restockPlans';
-import {localDate} from '../domain/workflow';
+import {localDate,isCountVerified} from '../domain/workflow';
 import {FORM_LABEL,formatAmount,type HerbRestockPlan,type RestockCadence,
   type RestockReviewResult} from '../types';
 import {useApp} from '../state/AppContext';
@@ -12,7 +12,7 @@ type Draft={id?:string;herbId:string;form:'dry'|'powder';cadence:RestockCadence;
  nextReviewOn:string;active:boolean;vendorId:string;quantity:string;notes:string};
 function initial():Draft{return {herbId:'',form:'dry',cadence:'monthly',nextReviewOn:localDate(),
  active:true,vendorId:'',quantity:'',notes:''};}
-export function RestockPlansPanel(){
+export function RestockPlansPanel({onReceive}:{onReceive:(herbId:string,form:'dry'|'powder',plan?:{vendorId?:string;referenceQty?:number})=>void}){
  const {db,setDB,notify,reportError}=useApp();
  const [draft,setDraft]=useState<Draft|null>(null);
  const [reviewId,setReviewId]=useState<string|null>(null);
@@ -51,6 +51,12 @@ export function RestockPlansPanel(){
      setDB(()=>next);notify('Follow-up marked addressed. No purchase or stock movement was created.');
    }catch(e){reportError(e);}
  }
+ function noOrderNeeded(id:string){
+   try{
+     const next=reviewRestockPlan(db,id,'no_order_needed');
+     setDB(()=>next);notify('No-order review recorded. Next date scheduled. No purchase or stock change was made.');
+   }catch(e){reportError(e);}
+ }
  function startReview(id:string){setReviewId(id);setResult('consider_order');setReviewNotes('');}
  function confirmReview(){
    if(!reviewing)return;
@@ -68,6 +74,7 @@ export function RestockPlansPanel(){
        <div><strong>{due.length}</strong><span>Due for review</span></div>
        <div><strong>{queue.length-due.length}</strong><span>Upcoming</span></div>
        <div><strong>{paused.length}</strong><span>Paused</span></div>
+       <div><strong>{pending.length}</strong><span>Follow-ups</span></div>
      </div>
      {!sorted.length&&<EmptyState title="No scheduled reviews yet"
        description="Start with a frequently ordered dried herb. Set a first review date and choose a repeat interval."/>}
@@ -75,6 +82,9 @@ export function RestockPlansPanel(){
        const h=db.herbs.find(h=>h.id===p.herbId);
        const supplier=db.vendors.find(v=>v.id===p.vendorId)?.name;
        const isDue=p.active&&p.nextReviewOn<=today;
+       const physicallyCounted=h?isCountVerified(h,p.form):false;
+       const lastReceipt=db.purchases.filter(q=>q.herbId===p.herbId&&q.form===p.form)
+         .sort((a,b)=>b.date.localeCompare(a.date))[0];
        return <div key={p.id} className="restock-plan-row">
          <div className="row-main">
            <strong>{h?.name||'Unknown herb'} · {FORM_LABEL[p.form]}</strong>
@@ -82,12 +92,18 @@ export function RestockPlansPanel(){
              {supplier?' · '+supplier:''}
              {p.targetQuantityOz!==undefined?' · Reference '+formatAmount(p.targetQuantityOz)+' oz wt':''}
            </small>
+           <small>{physicallyCounted?'Counted on hand: '+formatAmount(h!.stock[p.form])+' oz wt':'Physical stock count not verified'}
+             {lastReceipt?' · Last received '+lastReceipt.date:''}</small>
            {p.notes&&<small>{p.notes}</small>}
          </div>
          <Badge tone={isDue?'warning':'neutral'}>{!p.active?'Paused':isDue?'Due':'Scheduled'}</Badge>
          <div className="restock-plan-actions">
+           {p.active&&isDue&&<Button size="sm" variant="secondary" onClick={()=>noOrderNeeded(p.id)}>
+             <CheckCircle2 size={15}/> No order</Button>}
            {p.active&&<Button size="sm" variant={isDue?'primary':'secondary'} onClick={()=>startReview(p.id)}>
              <ClipboardCheck size={15}/> Review</Button>}
+           <Button size="sm" variant="ghost" onClick={()=>onReceive(p.herbId,p.form,{
+             vendorId:p.vendorId,referenceQty:p.targetQuantityOz})}>Receive</Button>
            <Button size="sm" variant="ghost" onClick={()=>edit(p)}>Edit</Button>
            <Button size="sm" variant="ghost" onClick={()=>toggle(p)}>
              {p.active?<Pause size={14}/>:<Play size={14}/>} {p.active?'Pause':'Resume'}</Button>
@@ -100,8 +116,14 @@ export function RestockPlansPanel(){
      {pending.map(r=><div className="restock-plan-row" key={r.id}>
        <div className="row-main"><strong>{db.herbs.find(h=>h.id===r.herbId)?.name||'Herb'} · {FORM_LABEL[r.form]}</strong>
          <small>Reviewed {r.reviewedOn}{r.notes?' · '+r.notes:''}</small></div>
-       <Button size="sm" variant="secondary" onClick={()=>resolve(r.id)}>
-         <CheckCircle2 size={15}/> Mark addressed</Button>
+       <div className="restock-plan-actions">
+         <Button size="sm" variant="secondary" onClick={()=>{
+           const plan=db.restockPlans.find(p=>p.id===r.planId);
+           onReceive(r.herbId,r.form,plan?{vendorId:plan.vendorId,referenceQty:plan.targetQuantityOz}:undefined);
+         }}>Receive delivery</Button>
+         <Button size="sm" variant="ghost" onClick={()=>resolve(r.id)}>
+           <CheckCircle2 size={15}/> Mark addressed</Button>
+       </div>
      </div>)}
    </Card>}
    <Card title="Recent review decisions" action={<CalendarClock size={18} className="muted-icon"/>}>
@@ -152,6 +174,9 @@ export function RestockPlansPanel(){
      footer={<><Button variant="ghost" onClick={()=>setReviewId(null)}>Cancel</Button>
        <Button onClick={confirmReview}><CheckCircle2 size={15}/> Save review</Button></>}>
      <p className="body-copy">{db.herbs.find(h=>h.id===reviewing.herbId)?.name||'Herb'} · {FORM_LABEL[reviewing.form]}</p>
+     <p className="hint">{db.herbs.find(h=>h.id===reviewing.herbId)?.stockCheckedAt?.[reviewing.form]?
+       'Counted on hand: '+formatAmount(db.herbs.find(h=>h.id===reviewing.herbId)!.stock[reviewing.form])+' oz wt':
+       'Physical count not verified'}{reviewing.targetQuantityOz?' · Typical order reference: '+formatAmount(reviewing.targetQuantityOz)+' oz wt':''}</p>
      <p className="hint">You are acknowledging a review. No purchase or stock movement will be created.</p>
      <SelectField label="Decision" value={result}
        onChange={e=>setResult(e.target.value as RestockReviewResult)}>
