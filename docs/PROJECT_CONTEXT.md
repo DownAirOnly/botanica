@@ -1,6 +1,6 @@
 # Botanica — project context / conversation handoff
 
-**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v8 (optional recurring restock reviews and production history; mobile user testing pending)**.
+**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v9 (restock-to-receipt and production history drilldowns; mobile testing pending)**.
 
 ## Mission
 
@@ -141,3 +141,14 @@ The user requested the next iteration after v7, following the brother's feedback
 - Production → History shows separately recorded tincture batch volume, extraction output, tea batch weight and finished unit counts, with recent and ranked events and weekly/monthly charts. Old product packaging movement is included only when it is not already represented by an attributed ProductionRun; user must not infer sales, actual demand, or complete older worksheet histories.
 - Schema v6 adds `restockPlans` and `restockReviews`; v5 backup migration and all legacy migrations initialize them empty and preserve all stock, recipes, packaging, suppliers and business history. New workspaces start at schema v6; no invented schedule/date or production row is backfilled.
 - Still deferred: outbound push alerts (PWA limitations and user permission required), automatic purchasing, exact lot-level depletion, sales trends without sale records, and owner-confirmed business cadence beyond review reminders.
+
+## v9 — workflow polish (2026-11-06)
+
+The user requested the next version after v8. Focus is fewer taps and useful recall, not adding another data subsystem.
+
+- From Inventory → Check & Restock → Schedule, an existing review or pending follow-up can open the actual herb receipt form in place with herb/form and optional preferred supplier. The plan's typical order quantity and an old quote remain reference-only; **actual received quantity and actual paid price are required** for a receipt. Receipt never implicitly resolves an open ordering follow-up.
+- Review rows show physically verified stock counts and the latest recorded purchase date. Due reviews can be marked `No order` directly in one tap, logging a decision and advancing the next scheduled date. Any need to order is still tracked as an outstanding follow-up until marked addressed.
+- Production → History now has stable item-specific filters (using recipe/herb/product ID rather than display name), clickable period columns, one-tap top-item drilldown, and local CSV export of the visible filtered events. No seller ranking or sales inference is made. The underlying production event projection remains read-only.
+- Today groups 15 possible unverified packaging alerts into one actionable entry; the Check & Restock overview directly routes to containers and finished-goods verification.
+- **Database schema remains v6** and no new persistent arrays or data migration are necessary. Fresh workspaces and backup migration metadata carry appVersion 9, but existing schema v6 workspaces remain supported without rewriting historical records. All private formula and inventory records stay in Firebase.
+

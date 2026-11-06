@@ -1,5 +1,16 @@
 # Changelog
 
+## v9 — 2026-11-06 (faster restocking and production drilldowns)
+
+- Restock review plans now show verified on-hand herb quantities (or a clear unverified status) plus the most recent recorded purchase receipt date.
+- Due review rows offer one-tap **No order**, with an auditable review decision and next-date advancement. **Review** remains available for a decision with notes or a follow-up.
+- Schedule rows and outstanding follow-ups now have **Receive** actions that open the actual herb receipt editor for the appropriate herb and form. An optional plan supplier carries over, but the received quantity and actual price must be entered—old quotes and target quantities are informational only. Receipt does **not** automatically close a separate pending follow-up.
+- Production History now filters by stable formula/herb/product ID, supports click/tap period bars for drill-down, permits selecting a top item as a filter, and exports the currently shown records as a local CSV. Charts still separate tincture volume, extraction output, tea weight, and finished units.
+- Today consolidates repetitive unverified-container alerts into a single summary. Inventory → Check & Restock directly links to remaining container and finished-goods counts.
+- No schema migration: schema v6 stays intact, all existing Firebase workspaces, inventory, historical records and backup formats are preserved. Private business data and exports are not committed to the public repo.
+
+
+
 ## v8 — 2026-11-05 (recurring restock reviews and production insights)
 
 - Added an **opt-in Schedule** tab under Inventory → Check & Restock. Choose a dry/powder herb, first review date, and weekly / every-two-weeks / monthly / quarterly cadence. Record supplier and reference order quantity if useful.

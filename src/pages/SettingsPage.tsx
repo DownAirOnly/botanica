@@ -42,7 +42,7 @@ export function SettingsPage(){
    </Card>
    <Card title="Display & preferences">
     <SelectField label="Appearance" value={theme} onChange={e=>setTheme(e.target.value)}><option value="system">Follow device setting</option><option value="light">Light</option><option value="dark">Dark</option></SelectField>
-    <RowItem title="App version" end="v8"/><RowItem title="Data schema" end={`v${db.schemaVersion}`}/><RowItem title="Storage" end="Private Cloud Firestore"/><RowItem title="Sync" end={<Badge tone={syncStatus==='saved'?'success':'warning'}>{syncStatus==='saved'?'Saved':syncStatus==='saving'?'Syncing':'Needs attention'}</Badge>}/>
+    <RowItem title="App version" end="v9"/><RowItem title="Data schema" end={`v${db.schemaVersion}`}/><RowItem title="Storage" end="Private Cloud Firestore"/><RowItem title="Sync" end={<Badge tone={syncStatus==='saved'?'success':'warning'}>{syncStatus==='saved'?'Saved':syncStatus==='saving'?'Syncing':'Needs attention'}</Badge>}/>
    </Card>
   </div>
   {active?.kind==='herbal'&&<Card title="Import original spreadsheets" action={<FileSpreadsheet size={20} className="muted-icon"/>}>

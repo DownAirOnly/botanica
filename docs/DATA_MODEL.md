@@ -78,3 +78,11 @@ The app supports importing exported schema v1 JSON backups; migration adds the n
 - Tincture batch volume (fl oz), single-herb extract output (fl oz), tea batch weight (oz wt), and finished product units are **different metrics**, not combinable. Graphs include zero-activity periods and never infer sales or profitability from production.
 - Versioned JSON restores from v1–v5 migrate to schema v6 without changing physical quantities or adding inferred dated activity. This does not increase Firestore's per-document budget.
 
+
+## v9 — read-only history filtering and restock receipt handoff (no schema change)
+
+- Production History now groups by the stable recipe, herb, or product ID; current/snapshot display names may vary over time, so names are not used as unique keys. Period bars and CSV export filter an existing in-memory production event projection only.
+- Local CSV export contains the selected rows with event date, name, quantity, unit, event source, and event ID. CSV cells are quoted and protected against spreadsheet formula injection. Data never leave the user's device via the export path.
+- Recurring restock review actions can pass a plan's preferred vendor to the actual receipt editor. The plan's reference quantity and a historical supplier quote are **never silently used as actual received quantity or actual purchase price**. A real receipt and a follow-up acknowledgment remain distinct events.
+- No changes to persistent object shapes or schema v6; all v8 backups and earlier compatible versions remain supported.
+
