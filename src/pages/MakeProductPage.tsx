@@ -1,17 +1,20 @@
 import {useState} from 'react';
 import {AlertCircle,ArrowRight,CheckCircle2,PackageCheck,ShoppingCart} from 'lucide-react';
-import {Badge,Button,Card,EmptyState,Field,RowItem,SelectField,Tabs} from '../components/UI';
-import {makeFinishedProduct,previewMakeProduct,type MakePreview} from '../domain/making';
+import {Badge,Button,Card,EmptyState,Field,Modal,RowItem,SelectField,Tabs} from '../components/UI';
+import {adjustPackagingSupply,makeFinishedProduct,previewMakeProduct,type MakePreview} from '../domain/making';
+import {IngredientCountDialog} from '../components/IngredientCountDialog';
 import {useApp} from '../state/AppContext';
-import {formatAmount,unitLabel,RECIPE_UNIT,type MakeProductSource} from '../types';
+import {formatAmount,unitLabel,RECIPE_UNIT,type MakeProductDraft,type MakeProductSource,type StockForm} from '../types';
 
-export function MakeProductPage({onEditProduct,onPackaging,selectedProductId}:{
- onEditProduct:(productId:string)=>void;onPackaging:()=>void;selectedProductId:string|null;
+export function MakeProductPage({onEditProduct,onPackaging,draft,onDraftChange}:{
+ onEditProduct:(productId:string)=>void;onPackaging:()=>void;
+ draft:MakeProductDraft;onDraftChange:(draft:MakeProductDraft)=>void;
 }){
  const {db,setDB,notify,reportError}=useApp();
- const [productId,setProductId]=useState(selectedProductId||''),[count,setCount]=useState('1');
- const [source,setSource]=useState<MakeProductSource>('ingredients');
- const [query,setQuery]=useState('');
+ const {productId,count,source,query}=draft;
+ const change=(patch:Partial<MakeProductDraft>)=>onDraftChange({...draft,...patch});
+ const [verifyContainer,setVerifyContainer]=useState(false),[containerCount,setContainerCount]=useState('');
+ const [verifyIngredient,setVerifyIngredient]=useState<{herbId:string;form:StockForm}|null>(null);
  const product=db.products.find(x=>x.id===productId);
  const recipe=db.recipes.find(x=>x.id===product?.recipeId);
  const eligible=db.products.filter(p=>p.recipeId&&['tea','tincture','spray'].includes(p.kind)&&
@@ -29,25 +32,41 @@ export function MakeProductPage({onEditProduct,onPackaging,selectedProductId}:{
    try{
      const next=makeFinishedProduct(db,productId,Number(count),source);
      setDB(()=>next);
+     change({completed:{productName:preview.productName,count:preview.count,source}});
      notify(`Made ${count} × ${preview.productName}. Ingredients, containers and finished stock were updated together.`);
-     setCount('1');
+   }catch(e){reportError(e);}
+ }
+ function saveContainerCount(){
+   if(!preview)return;
+   try{
+     if(!containerCount.trim())throw new Error('Enter the physical number of containers on hand, including zero.');
+     const next=adjustPackagingSupply(db,preview.containerSupplyId,'set',Number(containerCount),'Physical count verified');
+     setDB(()=>next);notify('Container count verified.');setVerifyContainer(false);setContainerCount('');
    }catch(e){reportError(e);}
  }
  const recent=db.productionRuns.slice(0,8);
+ if(draft.completed)return <div className="content-stack">
+   <Card title="Product run recorded">
+     <div className="alert success"><CheckCircle2 size={18}/> Made {draft.completed.count} × {draft.completed.productName} from {draft.completed.source==='bulk'?'prepared bulk':'individual ingredients'}.</div>
+     <p className="body-copy">Ingredients or bulk, containers, and finished stock were updated as one recorded run. No further production will be recorded until you start another.</p>
+     <div className="action-bar"><Button onClick={()=>change({count:'1',completed:undefined})}>Make another</Button>
+       <Button variant="secondary" onClick={onPackaging}>View containers</Button></div>
+   </Card>
+ </div>;
  return <div className="content-stack">
    <div className="page-heading"><div><h2>Make product</h2>
      <p>One step updates ingredients or bulk, packaging supplies, and the finished product count.</p></div>
      <Button variant="secondary" onClick={onPackaging}><ShoppingCart size={16}/> Packaging supplies</Button></div>
    <div className="two-columns">
      <Card title="1 · What are you making?">
-       <Field label="Find a finished product" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search by product name…"/>
-       <SelectField label="Product" value={productId} onChange={e=>{setProductId(e.target.value);setCount('1');}}>
+       <Field label="Find a finished product" value={query} onChange={e=>change({query:e.target.value})} placeholder="Search by product name…"/>
+       <SelectField label="Product" value={productId} onChange={e=>change({productId:e.target.value,count:'1',completed:undefined})}>
          <option value="">Choose a product…</option>{eligible.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
          {product&&!eligible.some(p=>p.id===product.id)&&<option value={product.id}>{product.name}</option>}
        </SelectField>
-       <Field label="Number of finished units" type="number" min="1" step="1" value={count} onChange={e=>setCount(e.target.value)}/>
+       <Field label="Number of finished units" type="number" min="1" step="1" value={count} onChange={e=>change({count:e.target.value})}/>
        <div className="section-heading"><strong>2 · Where will the contents come from?</strong></div>
-       <Tabs value={source} onChange={v=>setSource(v as MakeProductSource)}
+       <Tabs value={source} onChange={v=>change({source:v as MakeProductSource})}
          options={[{id:'ingredients',label:'Single herb ingredients'},{id:'bulk',label:'Prepared bulk'}]}/>
        <p className="hint">{source==='ingredients'?
          'Mix directly using measured ingredient quantities from the saved formula; nothing is subtracted from existing bulk.':
@@ -69,7 +88,8 @@ export function MakeProductPage({onEditProduct,onPackaging,selectedProductId}:{
              end={<strong>−{formatAmount(preview.amountOz)}</strong>}/>:
              preview.ingredients.map(i=><RowItem key={i.herbId+'-'+i.form} title={i.name}
                detail={i.verified?`${i.form} · counted ${formatAmount(i.available)} ${unitLabel(i.form==='extract'?'fl_oz':'oz_wt')}`:'Physical count not verified'}
-               end={<span className={!i.enough?'text-danger':''}>−{formatAmount(i.amountOz)} {unitLabel(i.form==='extract'?'fl_oz':'oz_wt')}</span>}/>)}
+               end={<div className="make-count-actions"><span className={!i.enough?'text-danger':''}>−{formatAmount(i.amountOz)} {unitLabel(i.form==='extract'?'fl_oz':'oz_wt')}</span>
+                 {!i.verified&&<Button size="sm" variant="secondary" onClick={()=>setVerifyIngredient({herbId:i.herbId,form:i.form})}>Count</Button>}</div>}/>)}
            <RowItem title={preview.containerName}
              detail={preview.containerVerified?`Counted: ${preview.containerAvailable}`:'Physical count not verified'}
              end={<strong>−{preview.containerRequired} containers</strong>}/>
@@ -81,7 +101,7 @@ export function MakeProductPage({onEditProduct,onPackaging,selectedProductId}:{
            </div></div>}
          <div className="make-confirm">
            <Button disabled={!preview.ready} onClick={make}><PackageCheck size={17}/> Make {preview.count} {preview.count===1?'unit':'units'}</Button>
-           {!preview.containerVerified&&<Button variant="ghost" onClick={onPackaging}>Verify containers</Button>}
+           {(!preview.containerVerified||preview.containerAvailable<preview.count)&&<Button variant="secondary" onClick={()=>{setContainerCount('');setVerifyContainer(true);}}>Count {preview.containerName}</Button>}
            <p className="hint">Confirmation records one linked production run with all stock movements. This cannot be undone automatically; corrections are recorded separately.</p>
          </div>
        </>}
@@ -93,6 +113,13 @@ export function MakeProductPage({onEditProduct,onPackaging,selectedProductId}:{
        end={<CheckCircle2 size={17} className="positive-icon"/>}/>):
        <EmptyState title="No combined product runs yet" description="Existing batch and packaging movements remain in the original ledger. New Make Product operations will appear here."/>}
    </Card>
+   {verifyIngredient&&<IngredientCountDialog key={verifyIngredient.herbId+'-'+verifyIngredient.form}
+     herbId={verifyIngredient.herbId} form={verifyIngredient.form} onClose={()=>setVerifyIngredient(null)}/>}
+   {verifyContainer&&preview&&<Modal title={`Count ${preview.containerName}`} onClose={()=>setVerifyContainer(false)}
+     footer={<><Button variant="ghost" onClick={()=>setVerifyContainer(false)}>Cancel</Button><Button onClick={saveContainerCount}>Save count and return</Button></>}>
+     <Field autoFocus label="Containers physically on hand" type="number" min="0" step="1" value={containerCount} onChange={e=>setContainerCount(e.target.value)}/>
+     <p className="hint">Recorded: {preview.containerAvailable}. Enter the physical count, including zero. Saving records a stock adjustment, not a purchase receipt.</p>
+   </Modal>}
    {db.products.filter(p=>!p.recipeId).length>0&&<p className="hint">
      Products without a linked formula are not included in Make Product. Link one in Inventory → Finished goods first.
    </p>}
