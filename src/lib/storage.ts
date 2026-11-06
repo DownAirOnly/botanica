@@ -54,15 +54,15 @@ export function validateBackup(value:unknown):BotanicaDB {
     return v as BotanicaDB;
   }
   if(v.schemaVersion===5){
-    return {...v,restockPlans:[],restockReviews:[],schemaVersion:DB_VERSION,appVersion:8} as BotanicaDB;
+    return {...v,restockPlans:[],restockReviews:[],schemaVersion:DB_VERSION,appVersion:9} as BotanicaDB;
   }
   if(v.schemaVersion===4){
     return {...v,packagingSupplies:defaultPackagingSupplies(),packagingReceipts:[],
-      productionRuns:[],herbRestockNotes:[],restockPlans:[],restockReviews:[],schemaVersion:DB_VERSION,appVersion:8} as BotanicaDB;
+      productionRuns:[],herbRestockNotes:[],restockPlans:[],restockReviews:[],schemaVersion:DB_VERSION,appVersion:9} as BotanicaDB;
   }
   if(v.schemaVersion===3){
     return {...v,productionTasks:[],packagingSupplies:defaultPackagingSupplies(),
-      packagingReceipts:[],productionRuns:[],herbRestockNotes:[],restockPlans:[],restockReviews:[],schemaVersion:DB_VERSION,appVersion:8} as BotanicaDB;
+      packagingReceipts:[],productionRuns:[],herbRestockNotes:[],restockPlans:[],restockReviews:[],schemaVersion:DB_VERSION,appVersion:9} as BotanicaDB;
   }
   // Migrate v1/v2 backups without changing stock or erasing unknown source archives.
   // Old quotedPricePerLb is an undated dry-herb price, NOT a purchase.
@@ -77,7 +77,7 @@ export function validateBackup(value:unknown):BotanicaDB {
   }
   return {...v,items:v.schemaVersion===1?[]:v.items!,priceQuotes:quotes,productionTasks:[],
     packagingSupplies:defaultPackagingSupplies(),packagingReceipts:[],productionRuns:[],herbRestockNotes:[],restockPlans:[],restockReviews:[],
-    schemaVersion:DB_VERSION,appVersion:8} as BotanicaDB;
+    schemaVersion:DB_VERSION,appVersion:9} as BotanicaDB;
 }
 export function downloadJSON(db:BotanicaDB){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`botanica-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);}
 export async function importJSON(file:File){return validateBackup(JSON.parse(await file.text()));}
