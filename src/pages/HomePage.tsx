@@ -74,9 +74,9 @@ export function HomePage({onNavigate,onOpenHerb,onOpenRestock}:{
        {lowContainers.slice(0,2).map(c=><RowItem key={c.id} title={c.category+' · '+c.variant}
          detail="Packaging supply at or below reorder threshold" end={<Badge tone="warning">Container</Badge>}
          onClick={()=>onNavigate('containers')}/>)}
-       {containerCounts.slice(0,2).map(c=><RowItem key={c.id} title={c.category+' · '+c.variant}
-         detail="Container stock · physical count needed" end={<Badge>Count</Badge>}
-         onClick={()=>onNavigate('containers')}/>)}
+       {containerCounts.length>0&&<RowItem title="Packaging supplies"
+         detail={containerCounts.length+' container types still need a physical count'}
+         end={<Badge>Count</Badge>} onClick={()=>onNavigate('containers')}/>}
        {productCounts.slice(0,2).map(p=><RowItem key={p.id} title={p.name}
          detail="Finished product · not counted" end={<Badge>Count</Badge>}
          onClick={()=>onNavigate('products')}/>)}
