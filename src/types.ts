@@ -99,11 +99,6 @@ export const FORM_UNIT: Record<StockForm, 'oz_wt' | 'fl_oz'> = {dry:'oz_wt',powd
 export const RECIPE_UNIT: Record<FormulaKind, 'oz_wt' | 'fl_oz'> = {tincture:'fl_oz',tea:'oz_wt'};
 export const unitLabel = (unit: StockMovement['unit']) => unit === 'oz_wt' ? 'oz wt' : unit === 'fl_oz' ? 'fl oz' : unit === 'units' ? 'units' : unit;
 export const formatAmount = (value: number) => Number(value.toFixed(3)).toLocaleString(undefined,{maximumFractionDigits:3});
-/** HTML date inputs must use the device's local day, not the UTC day. */
-export const localDateToday = () => {
- const now=new Date();
- return [now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
-};
 export const makeId = () => globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 export const normalizeName = (s: string) => s.trim().toLowerCase().replace(/['’]/g,'').replace(/[^a-z0-9]+/g,' ');
 export const zeroStock = (): StockAmounts => ({dry:0,powder:0,extract:0});
