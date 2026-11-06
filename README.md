@@ -55,8 +55,10 @@ Follow **[Firebase setup](docs/FIREBASE_SETUP.md)** before entering business dat
 - **React + TypeScript + Vite**, with shared UI components and CSS tokens.
 - Firebase Google Authentication, Firestore owner-only workspaces and optimistic revision checks.
 - Domain functions manage stock math, purchase receipt, recipe scaling, batch production and packaging; UI components do not directly manipulate inventory balances.
-- **Whole-number releases** (v1–v9). README stays descriptive; changes go in `CHANGELOG.md`.
+- **Whole-number releases** (v1–v10). README stays descriptive; changes go in `CHANGELOG.md`.
 - `docs/PROJECT_CONTEXT.md` is the authoritative conversation-handoff file. Update it whenever the scope, architecture or open decisions change.
+
+See [v10 usability audit](docs/V10_USABILITY_AUDIT.md) for source-derived workflow findings, the measured v8 baseline, and outstanding phone testing.
 
 ## Security and current limitations
 

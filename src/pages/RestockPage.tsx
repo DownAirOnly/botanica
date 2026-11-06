@@ -3,7 +3,7 @@ import {ArrowLeft,ClipboardCheck,PackagePlus,Search,ShoppingCart} from 'lucide-r
 import {Button,Card,EmptyState,Field,Modal,Tabs} from '../components/UI';
 import {adjustStock,ensureVendor,receivePurchase} from '../domain/inventory';
 import {quoteVendor,latestPriceQuote} from '../domain/pricing';
-import {restockQueue,stockCountQueue} from '../domain/workflow';
+import {localDate,restockQueue,stockCountQueue} from '../domain/workflow';
 import {FORM_LABEL,FORM_UNIT,formatAmount,makeId,unitLabel,type Purchase,type StockForm,type RestockTab} from '../types';
 import {useApp} from '../state/AppContext';
 import {RestockPlansPanel} from '../components/RestockPlansPanel';
@@ -15,7 +15,7 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
  const [countTarget,setCountTarget]=useState<{herbId:string;form:StockForm}|null>(null);
  const [countQty,setCountQty]=useState(''),[countReason,setCountReason]=useState('Physical count confirmed');
  const [receiveTarget,setReceiveTarget]=useState<{herbId:string;form:'dry'|'powder'}|null>(null);
- const [supplier,setSupplier]=useState(''),[quantity,setQuantity]=useState(''),[price,setPrice]=useState(''),[shipping,setShipping]=useState('0'),[date,setDate]=useState(new Date().toISOString().slice(0,10)),[time,setTime]=useState('');
+ const [supplier,setSupplier]=useState(''),[quantity,setQuantity]=useState(''),[price,setPrice]=useState(''),[shipping,setShipping]=useState('0'),[date,setDate]=useState(localDate()),[time,setTime]=useState('');
  const [referenceQty,setReferenceQty]=useState<number|undefined>();
  const unchecked=stockCountQueue(db),restock=restockQueue(db);
  const matches=(name:string)=>name.toLowerCase().includes(query.trim().toLowerCase());
@@ -40,7 +40,7 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
    setReceiveTarget({herbId,form});setSupplier(plannedSupplier||(q?quoteVendor(db,q):''));
    setReferenceQty(plan?.referenceQty);
    // A dated supplier quote is not proof of actual received quantity or price.
-   setPrice('');setQuantity('');setShipping('0');setDate(new Date().toISOString().slice(0,10));setTime('');
+   setPrice('');setQuantity('');setShipping('0');setDate(localDate());setTime('');
  }
  function applyReceipt(){
    if(!receiveTarget)return;

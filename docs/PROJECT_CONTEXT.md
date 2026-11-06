@@ -1,6 +1,6 @@
 # Botanica — project context / conversation handoff
 
-**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-05. Current repository source version: **v9 (restock-to-receipt and production history drilldowns; mobile testing pending)**.
+**Read this before changing the project or continuing work in a new conversation.** Updated: 2026-11-06. Current repository source version: **v10 (usability workflow changes; authenticated desktop/mobile re-audit pending)**.
 
 ## Mission
 
@@ -152,3 +152,13 @@ The user requested the next version after v8. Focus is fewer taps and useful rec
 - Today groups 15 possible unverified packaging alerts into one actionable entry; the Check & Restock overview directly routes to containers and finished-goods verification.
 - **Database schema remains v6** and no new persistent arrays or data migration are necessary. Fresh workspaces and backup migration metadata carry appVersion 9, but existing schema v6 workspaces remain supported without rewriting historical records. All private formula and inventory records stay in Firebase.
 
+
+## v10 — usability-focused workflows (2026-11-06)
+
+- Evidence: the supplied v8 authenticated desktop audit has actual interaction counts; the v9/v10 examination is source inspection only. No new mobile or after-change tap measurements. See `docs/V10_USABILITY_AUDIT.md`.
+- Make Product draft is lifted to `App` so product, count, search and bulk-versus-ingredients source survive unmount/re-navigation within the active app session. A successful run shows a completion state requiring **Make another** before further making.
+- `IngredientCountDialog` supports physical stock verification within Recipes, Batches and Make Product; Make Product also offers a container-count modal. These invoke existing inventory domain adjustments with audit movements and verified timestamps, not arbitrary stock edits.
+- Packaging page has a consecutive **Count all containers** workflow. Each save is independent, auditable and immediately persisted; cancel never rolls back prior saved counts.
+- Receipt form defaults use `localDate()` (device calendar date), not UTC ISO extraction. Stored receipt dates are still YYYY-MM-DD values; the exact original reported mismatch requires reproduction.
+- Readable shortage messages give needed/current quantities with correct measurement units. No change to `previewMakeProduct` readiness rules or `makeFinishedProduct` bulk-versus-ingredients exclusivity.
+- Schema v6 stays unchanged; v10 fresh/migrated workspaces carry appVersion 10. No new business-order or sales model. Additional mobile and owner workflow validation remains open.

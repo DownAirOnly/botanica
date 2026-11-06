@@ -4,7 +4,7 @@ import {HomePage} from './pages/HomePage';
 import {InventoryHub,ProductionHub,type InventorySection,type ProductionSection} from './components/WorkspaceHub';
 import {ItemsPage} from './pages/ItemsPage';
 import {SettingsPage} from './pages/SettingsPage';
-import {type PageId,type RestockTab} from './types';
+import {type PageId,type RestockTab,type MakeProductDraft} from './types';
 
 export default function App(){
  const [page,setPage]=useState<PageId>('home');
@@ -12,7 +12,7 @@ export default function App(){
  const [productionSection,setProductionSection]=useState<ProductionSection>('queue');
  const [herb,setHerb]=useState<string|null>(null);
  const [batchRecipe,setBatchRecipe]=useState<string|null>(null);
- const [makingProduct,setMakingProduct]=useState<string|null>(null);
+ const [makeDraft,setMakeDraft]=useState<MakeProductDraft>({productId:'',count:'1',source:'ingredients',query:''});
  const [editingProduct,setEditingProduct]=useState<string|null>(null);
  const [restockTab,setRestockTab]=useState<RestockTab>('verify');
  function go(target:PageId){
@@ -24,7 +24,7 @@ export default function App(){
    case 'containers':setInventorySection('packaging');setPage('inventory');return;
    case 'recipes':setProductionSection('formulas');setPage('production');return;
    case 'batches':setBatchRecipe(null);setProductionSection('batch');setPage('production');return;
-   case 'bottling':setMakingProduct(null);setProductionSection('bottle');setPage('production');return;
+   case 'bottling':setProductionSection('bottle');setPage('production');return;
    case 'inventory':setPage('inventory');return;
    case 'production':setPage('production');return;
    case 'work':setProductionSection('queue');setPage('production');return;
@@ -36,7 +36,11 @@ export default function App(){
  function openRestock(tab:RestockTab='verify'){
   setRestockTab(tab);setInventorySection('check');setPage('inventory');
  }
- function makeProduct(productId:string){setEditingProduct(null);setMakingProduct(productId);setProductionSection('bottle');setPage('production');}
+ function makeProduct(productId:string){
+  setEditingProduct(null);
+  setMakeDraft(prev=>({...prev,productId,count:prev.productId===productId?prev.count:'1',source:prev.productId===productId?prev.source:'ingredients',completed:undefined}));
+  setProductionSection('bottle');setPage('production');
+ }
  function openPackaging(){setInventorySection('packaging');setPage('inventory');}
  function openProductEditor(id:string){setEditingProduct(id);setInventorySection('products');setPage('inventory');}
  function makeBatch(recipeId:string){
@@ -45,7 +49,6 @@ export default function App(){
  function changeProductionSection(section:ProductionSection){
   setProductionSection(section);
   if(section==='batch')setBatchRecipe(null);
-  if(section==='bottle')setMakingProduct(null);
  }
  return <Shell page={page} onNavigate={go}>
   {page==='home'&&<HomePage onNavigate={go} onOpenHerb={openHerb} onOpenRestock={openRestock}/>}
@@ -53,7 +56,7 @@ export default function App(){
     restockTab={restockTab} selectedHerb={herb} onSelectHerb={setHerb} onOpenRestock={openRestock} onMakeProduct={makeProduct} editProductId={editingProduct}/>}
   {page==='production'&&<ProductionHub section={productionSection} onSectionChange={changeProductionSection}
     selectedRecipe={batchRecipe} onMakeBatch={makeBatch} onOpenRestock={()=>openRestock('verify')}
-    selectedProductId={makingProduct} onEditProduct={openProductEditor} onPackaging={openPackaging}/>}
+    makeDraft={makeDraft} onMakeDraftChange={setMakeDraft} onEditProduct={openProductEditor} onPackaging={openPackaging}/>}
   {page==='items'&&<ItemsPage/>}
   {page==='settings'&&<SettingsPage/>}
  </Shell>;

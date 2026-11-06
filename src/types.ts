@@ -52,6 +52,8 @@ export interface HerbRestockNote {
   /** Historical note only — not a stock receipt. */
 }
 export type MakeProductSource='bulk'|'ingredients';
+/** Unsaved UI choices only; never a stock movement or cloud record. */
+export interface MakeProductDraft {productId:string;count:string;source:MakeProductSource;query:string;completed?:{productName:string;count:number;source:MakeProductSource};}
 export interface ProductionRun {
   id:string;at:string;productId:string;productName:string;recipeId:string;
   count:number;packageOz:number;source:MakeProductSource;containerSupplyId:string;

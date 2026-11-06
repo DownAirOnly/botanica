@@ -11,7 +11,7 @@ import {PackagingPage} from '../pages/PackagingPage';
 import {MakeProductPage} from '../pages/MakeProductPage';
 import {ProductionHistoryPage} from '../pages/ProductionHistoryPage';
 import {stockCountQueue,restockQueue,productionQueue} from '../domain/workflow';
-import {formatAmount,RECIPE_UNIT,unitLabel,type RestockTab} from '../types';
+import {formatAmount,RECIPE_UNIT,unitLabel,type RestockTab,type MakeProductDraft} from '../types';
 import {useApp} from '../state/AppContext';
 
 export type InventorySection='check'|'herbs'|'packaging'|'products';
@@ -76,10 +76,10 @@ export function InventoryHub({section,onSectionChange,restockTab,selectedHerb,on
   </div>
  </div>;
 }
-export function ProductionHub({section,onSectionChange,selectedRecipe,onMakeBatch,onOpenRestock,selectedProductId,onEditProduct,onPackaging}:{
+export function ProductionHub({section,onSectionChange,selectedRecipe,onMakeBatch,onOpenRestock,makeDraft,onMakeDraftChange,onEditProduct,onPackaging}:{
  section:ProductionSection;onSectionChange:(s:ProductionSection)=>void;
  selectedRecipe:string|null;onMakeBatch:(id:string)=>void;onOpenRestock:()=>void;
- selectedProductId:string|null;onEditProduct:(productId:string)=>void;onPackaging:()=>void;
+ makeDraft:MakeProductDraft;onMakeDraftChange:(draft:MakeProductDraft)=>void;onEditProduct:(productId:string)=>void;onPackaging:()=>void;
 }){
  const {db}=useApp();const tasks=productionQueue(db);
  const bulk=Object.entries(db.bulk).filter(([,amount])=>amount>0);
@@ -117,7 +117,7 @@ export function ProductionHub({section,onSectionChange,selectedRecipe,onMakeBatc
    {section==='formulas'&&<RecipesPage onMakeBatch={onMakeBatch} onOpenRestock={onOpenRestock}/>}
    {section==='batch'&&<BatchesPage key={selectedRecipe||'new'} selectedRecipe={selectedRecipe}
      showTasks={false} onOpenRestock={onOpenRestock}/>}
-   {section==='bottle'&&<MakeProductPage key={selectedProductId||'new'} selectedProductId={selectedProductId} onEditProduct={onEditProduct} onPackaging={onPackaging}/>}
+   {section==='bottle'&&<MakeProductPage draft={makeDraft} onDraftChange={onMakeDraftChange} onEditProduct={onEditProduct} onPackaging={onPackaging}/>} 
    {section==='history'&&<ProductionHistoryPage/>}
   </div>
  </div>;

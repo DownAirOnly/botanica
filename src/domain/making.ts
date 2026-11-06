@@ -1,5 +1,5 @@
 import {
-  FORM_UNIT,RECIPE_UNIT,makeId,type BotanicaDB,type PackagingSupply,
+  FORM_UNIT,RECIPE_UNIT,formatAmount,unitLabel,makeId,type BotanicaDB,type PackagingSupply,
   type PackagingReceipt,type ProductionRun,type MakeProductSource,type BatchIngredient,
   type StockMovement,type HerbRestockNote
 } from '../types';
@@ -85,12 +85,15 @@ export function previewMakeProduct(db:BotanicaDB,productId:string,count:number,s
   const availableBulkOz=db.bulk[recipe.id]||0;
   const issues:string[]=[];
   if(!container.countCheckedAt)issues.push(`Verify the physical count of ${packagingName(container)}.`);
-  if(container.count<count)issues.push(`Need ${count} ${packagingName(container)}; recorded: ${container.count}.`);
-  if(source==='bulk'&&availableBulkOz+1e-9<amountOz)issues.push(
-    `Need ${amountOz.toFixed(3)} ${RECIPE_UNIT[recipe.kind]} bulk; recorded: ${availableBulkOz.toFixed(3)}.`);
+  if(container.count<count)issues.push(`You need ${count} ${packagingName(container)}. Recorded on hand: ${container.count}.`);
+  if(source==='bulk'&&availableBulkOz+1e-9<amountOz){
+    const unit=unitLabel(RECIPE_UNIT[recipe.kind]);
+    const possible=Math.floor((availableBulkOz+1e-9)/p.packageOz);
+    issues.push(`You need ${formatAmount(amountOz)} ${unit} of prepared bulk; you have ${formatAmount(availableBulkOz)} ${unit} — enough for ${possible} ${possible===1?'unit':'units'}.`);
+  }
   for(const i of ingredients){
     if(!i.verified)issues.push(`Verify the physical count of ${i.name} (${i.form}).`);
-    else if(!i.enough)issues.push(`Not enough ${i.name} (${i.form}): need ${i.amountOz.toFixed(3)}; counted ${i.available.toFixed(3)}.`);
+    else if(!i.enough)issues.push(`${i.name}: you need ${formatAmount(i.amountOz)} ${unitLabel(FORM_UNIT[i.form])}; counted on hand: ${formatAmount(i.available)} ${unitLabel(FORM_UNIT[i.form])}.`);
   }
   return {productId:p.id,productName:p.name,count,source,recipeId:recipe.id,containerSupplyId:container.id,
     containerName:packagingName(container),amountOz,availableBulkOz,containerRequired:count,

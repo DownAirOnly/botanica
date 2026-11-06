@@ -1,5 +1,16 @@
 # Changelog
 
+## v10 — 2026-11-06 (less interrupted work)
+
+- Keep the Make Product draft (product, quantity, ingredient/bulk source and search) while moving between work areas; returning to Production no longer silently changes the inventory source.
+- After recording a run, show an explicit completion state and **Make another** action rather than immediately allowing a second one-unit run.
+- Physical ingredient counts can be verified directly from Recipes, Make a Batch or Make Product; container counts can also be verified from Make Product without losing entry.
+- Added **Count all containers** to move consecutively through all 15 package types with a single guided dialog; every saved count keeps its own movement ledger entry.
+- Default dates on receipt/count forms now reflect the device's local calendar day instead of the UTC day. Stored purchase dates stay as entered; prior date discrepancy remains to be reproduced in an authenticated browser.
+- Prepared-bulk and ingredient shortage messages use readable quantities and units.
+- No database schema change (still v6), no private business data and no change to stock-deduction rules. See [v10 usability audit](docs/V10_USABILITY_AUDIT.md) for evidence boundaries and untested mobile paths.
+
+
 ## v9 — 2026-11-06 (faster restocking and production drilldowns)
 
 - Restock review plans now show verified on-hand herb quantities (or a clear unverified status) plus the most recent recorded purchase receipt date.
