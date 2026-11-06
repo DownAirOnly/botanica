@@ -57,8 +57,18 @@ export function InventoryHub({section,onSectionChange,restockTab,selectedHerb,on
   </div>
   <WorkspaceSwitcher label="Inventory sections" options={INVENTORY_SECTIONS} value={section} onChange={onSectionChange}/>
   <div className="workspace-content">
-   {section==='check'&&<RestockPage key={restockTab} embedded initialTab={restockTab}
-     onBack={()=>onSectionChange('herbs')} onOpenHerb={id=>{onSelectHerb(id);onSectionChange('herbs');}}/>}
+   {section==='check'&&<div className="content-stack">
+     <div className="inventory-count-links">
+       <button type="button" onClick={()=>onSectionChange('packaging')}>
+         <PackageCheck size={18}/><span><strong>Container counts</strong><small>{db.packagingSupplies.filter(p=>!p.countCheckedAt).length} to verify</small></span><ArrowRight size={15}/>
+       </button>
+       <button type="button" onClick={()=>onSectionChange('products')}>
+         <Package size={18}/><span><strong>Finished goods counts</strong><small>{db.products.filter(p=>!p.countCheckedAt).length} to verify</small></span><ArrowRight size={15}/>
+       </button>
+     </div>
+     <RestockPage key={restockTab} embedded initialTab={restockTab}
+       onBack={()=>onSectionChange('herbs')} onOpenHerb={id=>{onSelectHerb(id);onSectionChange('herbs');}}/>
+   </div>}
    {section==='herbs'&&<HerbsPage selected={selectedHerb} onSelect={onSelectHerb}
      onOpenRestock={()=>onOpenRestock('verify')}/>}
    {section==='packaging'&&<PackagingPage/>}
