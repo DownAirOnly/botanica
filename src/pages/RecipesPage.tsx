@@ -1,12 +1,14 @@
 import {useState} from 'react';
 import {ArrowLeft,ArrowRight,FlaskConical,Plus,Search,Trash2} from 'lucide-react';
 import {Badge,Button,Card,EmptyState,Field,Modal,RowItem,SelectField,Tabs} from '../components/UI';
+import {IngredientCountDialog} from '../components/IngredientCountDialog';
 import {calculateBatch,recipeLabel,saveRecipe,stockFormForKind} from '../domain/inventory';
-import {formatAmount,makeId,RECIPE_UNIT,unitLabel,type Recipe,type RecipeIngredient,type FormulaKind} from '../types';
+import {formatAmount,makeId,RECIPE_UNIT,unitLabel,type Recipe,type RecipeIngredient,type FormulaKind,type StockForm} from '../types';
 import {useApp} from '../state/AppContext';
 export function RecipesPage({onMakeBatch,onOpenRestock}:{onMakeBatch:(id:string)=>void;onOpenRestock:()=>void}){
  const {db,setDB,notify,reportError}=useApp();const [selected,setSelected]=useState<string|null>(null),[query,setQuery]=useState(''),[filter,setFilter]=useState('all'),[edit,setEdit]=useState<Recipe|null>(null);
  const [batchOz,setBatchOz]=useState('16');
+ const [verifyIngredient,setVerifyIngredient]=useState<{herbId:string;form:StockForm}|null>(null);
  const results=db.recipes.filter(r=>(filter==='all'||r.kind===filter)&&r.name.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>a.name.localeCompare(b.name));
  const recipe=db.recipes.find(r=>r.id===selected);
  const calc=recipe&&Number(batchOz)>0?(()=>{try{return calculateBatch(db,recipe,Number(batchOz));}catch{return []}})():[];
@@ -16,13 +18,14 @@ export function RecipesPage({onMakeBatch,onOpenRestock}:{onMakeBatch:(id:string)
    <div className="two-columns"><Card title="Scaled ingredients">
     <Field label={`Desired batch size (${unitLabel(RECIPE_UNIT[recipe.kind])})`} type="number" min="0" step="any" value={batchOz} onChange={e=>setBatchOz(e.target.value)}/>
     {calc.length?calc.map(c=>{const h=db.herbs.find(x=>x.id===c.herbId);return <RowItem key={c.herbId+'-'+c.form} title={h?.name||'Missing ingredient'} detail={`${formatAmount(c.parts)} parts · ${c.verified?`Counted: ${formatAmount(c.available)} ${unitLabel(RECIPE_UNIT[recipe.kind])}`:'Physical count needed'}`} end={<span className={c.enough?'':'text-danger'}>{formatAmount(c.amountOz)} {unitLabel(RECIPE_UNIT[recipe.kind])} {!c.verified?'· Not verified':!c.enough?'· Short':''}</span>}/>;}):<EmptyState title="Enter a valid batch size"/>}
-    <div className="card-footer">{calc.some(c=>!c.verified)&&<Button variant="secondary" onClick={onOpenRestock}>Verify ingredient stock</Button>}<Button disabled={!calc.length||calc.some(c=>!c.enough)} onClick={()=>onMakeBatch(recipe.id)}><FlaskConical size={17}/> Start production</Button>{calc.some(c=>!c.verified)?<p className="hint">Confirm the physical ingredient count before using this formula.</p>:calc.some(c=>!c.enough)&&<p className="hint">Not enough of one or more ingredients.</p>}</div>
+    <div className="card-footer">{calc.some(c=>!c.verified)&&<><Button variant="secondary" onClick={()=>{const next=calc.find(c=>!c.verified);if(next)setVerifyIngredient({herbId:next.herbId,form:next.form});}}>Count missing ingredient here</Button><Button variant="ghost" onClick={onOpenRestock}>All ingredient counts</Button></>}<Button disabled={!calc.length||calc.some(c=>!c.enough)} onClick={()=>onMakeBatch(recipe.id)}><FlaskConical size={17}/> Start production</Button>{calc.some(c=>!c.verified)?<p className="hint">Confirm the physical ingredient count before using this formula.</p>:calc.some(c=>!c.enough)&&<p className="hint">Not enough of one or more ingredients.</p>}</div>
    </Card><Card title="Formula details"><RowItem title="Type" end={<Badge>{recipe.kind==='tincture'?'Tincture · extracts':'Tea · dry herbs'}</Badge>}/><RowItem title="Ingredients" end={recipe.ingredients.length}/><RowItem title="Total parts" end={formatAmount(recipe.ingredients.reduce((n,i)=>n+i.parts,0))}/><RowItem title="Notes" end={recipe.notes||'—'}/><p className="hint">Parts are proportional. Changing a recipe only affects future batches; old batch records preserve their ingredient amounts.</p></Card></div>
   </>:<>
    <div className="page-heading"><div><h2>Recipes & formulas</h2><p>Reuse exact ingredient proportions and calculate any batch size.</p></div><Button onClick={()=>setEdit({id:makeId(),name:'',kind:'tincture',active:true,ingredients:[]})}><Plus size={18}/> New recipe</Button></div>
    <div className="toolbar"><label className="search-field"><Search size={18}/><input aria-label="Search recipes" placeholder="Find a recipe..." value={query} onChange={e=>setQuery(e.target.value)}/></label><Tabs value={filter} onChange={setFilter} options={[{id:'all',label:'All'},{id:'tincture',label:'Tinctures'},{id:'tea',label:'Teas'}]}/></div>
    <Card className="list-card">{results.length?results.map(r=><RowItem key={r.id} title={r.name} detail={`${recipeLabel(r)} · ${r.ingredients.length} ingredients`} end={<ArrowRight size={17}/>} onClick={()=>{setSelected(r.id);setBatchOz('16');}}/>):<EmptyState title="No recipes found" description="Add a recipe or import a tincture/tea workbook."/>}</Card>
   </>}
+  {verifyIngredient&&<IngredientCountDialog key={verifyIngredient.herbId+'-'+verifyIngredient.form} herbId={verifyIngredient.herbId} form={verifyIngredient.form} onClose={()=>setVerifyIngredient(null)}/>}
   {edit&&<RecipeEditor initial={edit} onClose={()=>setEdit(null)} onSave={r=>{try{const next=saveRecipe(db,r);setDB(()=>next);setEdit(null);setSelected(r.id);notify('Recipe saved.');}catch(e){reportError(e);}}}/>}
  </div>;
 }
