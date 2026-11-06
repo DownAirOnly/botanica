@@ -6,7 +6,7 @@ import {FORM_LABEL,FORM_UNIT,FORMS,formatAmount,makeId,unitLabel,zeroStock,zeroT
 import {useApp} from '../state/AppContext';
 import {CostsPanel,CostsSummary} from '../components/Pricing';
 import {latestPriceQuote,quoteVendor} from '../domain/pricing';
-import {isCountVerified} from '../domain/workflow';
+import {isCountVerified,localDate} from '../domain/workflow';
 import {recordHistoricalHerbRestock,confirmCurrentHerbSource} from '../domain/making';
 
 export function HerbsPage({selected,onSelect,onOpenRestock}:{selected:string|null;onSelect:(id:string|null)=>void;onOpenRestock:()=>void}){
@@ -34,7 +34,7 @@ function HerbDetail({herb,onBack}:{herb:Herb;onBack:()=>void}){
  const [histForm,setHistForm]=useState<'dry'|'powder'>('dry'),[histDate,setHistDate]=useState(''),[histTime,setHistTime]=useState(''),[histVendor,setHistVendor]=useState(''),[histNote,setHistNote]=useState('');
  const [form,setForm]=useState<StockForm>('dry'),[mode,setMode]=useState<'add'|'use'|'set'>('add'),[qty,setQty]=useState(''),[reason,setReason]=useState('');
  const [pTime,setPTime]=useState('');
-  const [pVendor,setPVendor]=useState(db.vendors.find(v=>v.id===herb.preferredVendorId)?.name||''),[pForm,setPForm]=useState<'dry'|'powder'>('dry'),[pQty,setPQty]=useState('16'),[pPrice,setPPrice]=useState(herb.quotedPricePerLb?.toString()||''),[pShipping,setPShipping]=useState('0'),[pDate,setPDate]=useState(new Date().toISOString().slice(0,10));
+  const [pVendor,setPVendor]=useState(db.vendors.find(v=>v.id===herb.preferredVendorId)?.name||''),[pForm,setPForm]=useState<'dry'|'powder'>('dry'),[pQty,setPQty]=useState('16'),[pPrice,setPPrice]=useState(herb.quotedPricePerLb?.toString()||''),[pShipping,setPShipping]=useState('0'),[pDate,setPDate]=useState(localDate());
  const [eForm,setEForm]=useState<'dry'|'powder'>('dry'),[eInput,setEInput]=useState(''),[eOutput,setEOutput]=useState(''),[eNotes,setENotes]=useState('');
  const [editName,setEditName]=useState(herb.name),[aliases,setAliases]=useState(herb.aliases.join(', ')),[thresholds,setThresholds]=useState({...herb.thresholds}),[vendorId,setVendorId]=useState(herb.preferredVendorId||'');
  const moves=db.movements.filter(m=>m.kind==='ingredient'&&m.itemId===herb.id).sort((a,b)=>b.at.localeCompare(a.at));
