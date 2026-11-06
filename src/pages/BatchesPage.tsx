@@ -1,12 +1,14 @@
 import {useState} from 'react';
 import {CheckCircle,FlaskConical,History,TriangleAlert,SlidersHorizontal} from 'lucide-react';
 import {Badge,Button,Card,EmptyState,Field,RowItem,SelectField,Modal} from '../components/UI';
+import {IngredientCountDialog} from '../components/IngredientCountDialog';
 import {adjustBulkStock,calculateBatch,completeBatch,recipeLabel} from '../domain/inventory';
-import {formatAmount,unitLabel,RECIPE_UNIT} from '../types';
+import {formatAmount,unitLabel,RECIPE_UNIT,type StockForm} from '../types';
 import {useApp} from '../state/AppContext';
 import {ProductionTasks} from '../components/ProductionTasks';
 export function BatchesPage({selectedRecipe,onOpenRestock,showTasks=true}:{selectedRecipe:string|null;onOpenRestock:()=>void;showTasks?:boolean}){
  const {db,setDB,notify,reportError}=useApp();const [chosen,setChosen]=useState(selectedRecipe||''),[qty,setQty]=useState('16'),[notes,setNotes]=useState('');const [adjustId,setAdjustId]=useState<string|null>(null),[adjustMode,setAdjustMode]=useState<'add'|'use'|'set'>('set'),[adjustQty,setAdjustQty]=useState(''),[adjustReason,setAdjustReason]=useState('');
+ const [verifyIngredient,setVerifyIngredient]=useState<{herbId:string;form:StockForm}|null>(null);
  const recipe=db.recipes.find(r=>r.id===chosen);
  const calc=recipe&&Number(qty)>0?(()=>{try{return calculateBatch(db,recipe,Number(qty));}catch{return []}})():[];
  const unknown=calc.filter(c=>!c.verified);
@@ -22,7 +24,7 @@ export function BatchesPage({selectedRecipe,onOpenRestock,showTasks=true}:{selec
     <div className="section-heading"><strong>Ingredient check</strong>{unknown.length?<Badge tone="warning">{unknown.length} need a count</Badge>:missing.length?<Badge tone="warning">{missing.length} shortage(s)</Badge>:calc.length?<Badge tone="success">Available</Badge>:null}</div>
     {calc.map(c=><RowItem key={c.herbId+'-'+c.form} title={db.herbs.find(h=>h.id===c.herbId)?.name||'Unknown herb'} detail={c.verified?`Counted: ${formatAmount(c.available)} ${unitLabel(RECIPE_UNIT[recipe.kind])}`:'Not counted · displayed quantity is unverified'} end={<span className={c.enough?'':'text-danger'}>{formatAmount(c.amountOz)} {c.enough?<CheckCircle size={14}/>:<TriangleAlert size={14}/>}</span>}/>)}
     {calc.length===0&&<EmptyState title="Enter a valid target amount"/>}
-    <div className="card-footer">{unknown.length>0&&<Button variant="secondary" onClick={onOpenRestock}>Verify ingredient stock</Button>}<Button disabled={!calc.length||missing.length>0||unknown.length>0} onClick={submit}><FlaskConical size={16}/> Complete batch</Button><p className="hint">Confirm only after ingredients are actually consumed and output is measured. This action updates ingredient stock and creates bulk mixture stock.</p></div></>}
+    <div className="card-footer">{unknown.length>0&&<><Button variant="secondary" onClick={()=>{const next=unknown[0];if(next)setVerifyIngredient({herbId:next.herbId,form:next.form});}}>Count missing ingredient here</Button><Button variant="ghost" onClick={onOpenRestock}>All ingredient counts</Button></>}<Button disabled={!calc.length||missing.length>0||unknown.length>0} onClick={submit}><FlaskConical size={16}/> Complete batch</Button><p className="hint">Confirm only after ingredients are actually consumed and output is measured. This action updates ingredient stock and creates bulk mixture stock.</p></div></>}
     {!recipe&&<EmptyState title="Choose a formula" description="Saved recipes can be reused for any batch size."/>}
    </Card>
    <div className="content-stack"><Card title="Bulk mixture inventory">
@@ -31,6 +33,7 @@ export function BatchesPage({selectedRecipe,onOpenRestock,showTasks=true}:{selec
    <Card title="Recent production" action={<History size={18}/>}>
     {db.batches.length?db.batches.slice(0,12).map(b=><RowItem key={b.id} title={b.recipeName} detail={new Date(b.date).toLocaleString()} end={`${formatAmount(b.amountOz)} ${unitLabel(b.unit)}`}/>):<EmptyState title="No batches recorded" description="Completed batches appear here with a frozen ingredient-use record."/>}
    </Card></div></div>
+  {verifyIngredient&&<IngredientCountDialog key={verifyIngredient.herbId+'-'+verifyIngredient.form} herbId={verifyIngredient.herbId} form={verifyIngredient.form} onClose={()=>setVerifyIngredient(null)}/>}
   {adjustId&&<Modal title="Adjust bulk mixture stock" onClose={()=>setAdjustId(null)} footer={<><Button variant="ghost" onClick={()=>setAdjustId(null)}>Cancel</Button><Button onClick={applyBulk}>Record adjustment</Button></>}>
     <SelectField label="Adjustment type" value={adjustMode} onChange={e=>setAdjustMode(e.target.value as 'add'|'use'|'set')}><option value="set">Set verified measured amount</option><option value="add">Add (documented)</option><option value="use">Remove / discard</option></SelectField>
     <Field label="Bulk quantity" type="number" min="0" step="any" value={adjustQty} onChange={e=>setAdjustQty(e.target.value)}/>
