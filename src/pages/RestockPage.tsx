@@ -15,7 +15,8 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
  const [countTarget,setCountTarget]=useState<{herbId:string;form:StockForm}|null>(null);
  const [countQty,setCountQty]=useState(''),[countReason,setCountReason]=useState('Physical count confirmed');
  const [receiveTarget,setReceiveTarget]=useState<{herbId:string;form:'dry'|'powder'}|null>(null);
- const [supplier,setSupplier]=useState(''),[quantity,setQuantity]=useState('16'),[price,setPrice]=useState(''),[shipping,setShipping]=useState('0'),[date,setDate]=useState(new Date().toISOString().slice(0,10)),[time,setTime]=useState('');
+ const [supplier,setSupplier]=useState(''),[quantity,setQuantity]=useState(''),[price,setPrice]=useState(''),[shipping,setShipping]=useState('0'),[date,setDate]=useState(new Date().toISOString().slice(0,10)),[time,setTime]=useState('');
+ const [referenceQty,setReferenceQty]=useState<number|undefined>();
  const unchecked=stockCountQueue(db),restock=restockQueue(db);
  const matches=(name:string)=>name.toLowerCase().includes(query.trim().toLowerCase());
  const visibleUnchecked=unchecked.filter(x=>matches(x.herb.name));
@@ -32,11 +33,14 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
      setDB(()=>next);notify('Physical stock count recorded.');setCountTarget(null);
    }catch(e){reportError(e);}
  }
- function beginReceive(herbId:string,form:'dry'|'powder'){
+ function beginReceive(herbId:string,form:'dry'|'powder',plan?:{vendorId?:string;referenceQty?:number}){
    const herb=db.herbs.find(h=>h.id===herbId);if(!herb)return;
    const q=latestPriceQuote(db,herbId,form);
-   setReceiveTarget({herbId,form});setSupplier(q?quoteVendor(db,q):'');
-   setPrice(q?String(q.pricePerLb):'');setQuantity('16');setShipping('0');setDate(new Date().toISOString().slice(0,10));setTime('');
+   const plannedSupplier=db.vendors.find(v=>v.id===plan?.vendorId)?.name;
+   setReceiveTarget({herbId,form});setSupplier(plannedSupplier||(q?quoteVendor(db,q):''));
+   setReferenceQty(plan?.referenceQty);
+   // A dated supplier quote is not proof of actual received quantity or price.
+   setPrice('');setQuantity('');setShipping('0');setDate(new Date().toISOString().slice(0,10));setTime('');
  }
  function applyReceipt(){
    if(!receiveTarget)return;
@@ -69,7 +73,7 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
      options={[{id:'verify',label:`Verify counts (${unchecked.length})`},{id:'reorder',label:`Restock (${restock.length})`},{id:'schedule',label:`Schedule (${db.restockPlans.filter(p=>p.active).length})`}]}/>
      {tab!=='schedule'&&<label className="search-field"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search ingredients…" aria-label="Filter ingredient list"/></label>}
    </div>
-   {tab==='schedule'?<RestockPlansPanel/>:tab==='verify'?<Card title="Unverified ingredient amounts">
+   {tab==='schedule'?<RestockPlansPanel onReceive={beginReceive}/>:tab==='verify'?<Card title="Unverified ingredient amounts">
      <p className="hint">Imported amounts are historical until checked. These rows are not labeled as out of stock. Priority is given to ingredients used in active formulas.</p>
      {visibleUnchecked.length?visibleUnchecked.map(({herb,form,active})=>
        <div className="row-item" key={herb.id+'-'+form}>
@@ -105,7 +109,10 @@ export function RestockPage({onBack,onOpenHerb,initialTab,embedded=false}:{onBac
    </Modal>}
    {receiveTarget&&receivingHerb&&<Modal title={`Receive ${receivingHerb.name}`} onClose={()=>setReceiveTarget(null)}
      footer={<><Button variant="ghost" onClick={()=>setReceiveTarget(null)}>Cancel</Button><Button onClick={applyReceipt}><ShoppingCart size={16}/> Record receipt</Button></>}>
-     <p className="hint">Receiving a shipment increases recorded stock and saves the actual paid price. It does not certify the existing total as a physical count.</p>
+     <p className="hint">Enter actual received quantities and paid prices. A schedule's reference quantity or a supplier's old quote does not automatically become a receipt. Receiving stock does not certify the previous physical count or close an outstanding follow-up.</p>
+     {referenceQty!==undefined&&<p className="hint">Scheduled reference quantity: {formatAmount(referenceQty)} oz wt (not entered as received)</p>}
+     {(()=>{const quote=latestPriceQuote(db,receiveTarget.herbId,receiveTarget.form);
+       return quote?<p className="hint">Last recorded supplier quote: ${quote.pricePerLb.toFixed(2)}/lb (reference only)</p>:null;})()}
      <Field label="Supplier" value={supplier} onChange={e=>setSupplier(e.target.value)}/>
      <div className="form-grid"><Field label="Received quantity (oz wt)" type="number" step="any" min="0.001" value={quantity} onChange={e=>setQuantity(e.target.value)}/>
        <Field label="Actual price / lb ($)" type="number" step="any" min="0" value={price} onChange={e=>setPrice(e.target.value)}/></div>
