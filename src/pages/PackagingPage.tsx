@@ -3,6 +3,7 @@ import {Boxes,CheckCircle,ClipboardCheck,Plus,ShoppingCart} from 'lucide-react';
 import {Badge,Button,Card,EmptyState,Field,Modal,Tabs} from '../components/UI';
 import {adjustPackagingSupply,receivePackagingSupply,savePackagingSupply} from '../domain/making';
 import {PACKAGING_CATEGORIES,packagingName} from '../data/packaging';
+import {localDate} from '../domain/workflow';
 import {useApp} from '../state/AppContext';
 import type {PackagingSupply} from '../types';
 
@@ -11,7 +12,7 @@ export function PackagingPage(){
  const [group,setGroup]=useState('All');
  const [chosen,setChosen]=useState<string|null>(null),[operation,setOperation]=useState<'count'|'receive'|'edit'>('count');
  const [quantity,setQuantity]=useState(''),[reason,setReason]=useState('Physical count verified');
- const [date,setDate]=useState(new Date().toISOString().slice(0,10)),[vendor,setVendor]=useState('');
+ const [date,setDate]=useState(localDate()),[vendor,setVendor]=useState('');
  const [threshold,setThreshold]=useState('0'),[notes,setNotes]=useState('');
  const [countQueue,setCountQueue]=useState<string[]>([]),[countTotal,setCountTotal]=useState(0);
  const supplies=db.packagingSupplies.filter(s=>group==='All'||s.category===group);
@@ -19,7 +20,7 @@ export function PackagingPage(){
  function open(s:PackagingSupply,mode:'count'|'receive'|'edit'){
    setCountQueue([]);setChosen(s.id);setOperation(mode);setQuantity('');
    setReason('Physical count verified');
-   setDate(new Date().toISOString().slice(0,10));
+   setDate(localDate());
    setVendor(s.vendor||'');setThreshold(String(s.threshold));setNotes(s.notes||'');
  }
  function countAll(){
