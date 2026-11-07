@@ -1,13 +1,13 @@
 import {useState} from 'react';
-import {AlertCircle,ArrowRight,CheckCircle2,PackageCheck,ShoppingCart} from 'lucide-react';
+import {AlertCircle,ArrowRight,CheckCircle2,PackageCheck,Plus,ShoppingCart} from 'lucide-react';
 import {Badge,Button,Card,EmptyState,Field,Modal,RowItem,SelectField,Tabs} from '../components/UI';
 import {adjustPackagingSupply,makeFinishedProduct,previewMakeProduct,type MakePreview} from '../domain/making';
 import {IngredientCountDialog} from '../components/IngredientCountDialog';
 import {useApp} from '../state/AppContext';
 import {formatAmount,unitLabel,RECIPE_UNIT,type MakeProductDraft,type MakeProductSource,type StockForm} from '../types';
 
-export function MakeProductPage({onEditProduct,onPackaging,draft,onDraftChange}:{
- onEditProduct:(productId:string)=>void;onPackaging:()=>void;
+export function MakeProductPage({onEditProduct,onCreateProduct,onPackaging,draft,onDraftChange}:{
+ onEditProduct:(productId:string)=>void;onCreateProduct:()=>void;onPackaging:()=>void;
  draft:MakeProductDraft;onDraftChange:(draft:MakeProductDraft)=>void;
 }){
  const {db,setDB,notify,reportError}=useApp();
@@ -64,7 +64,10 @@ export function MakeProductPage({onEditProduct,onPackaging,draft,onDraftChange}:
          <option value="">Choose a product…</option>{eligible.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
          {product&&!eligible.some(p=>p.id===product.id)&&<option value={product.id}>{product.name}</option>}
        </SelectField>
-       <Field label="Number of finished units" type="number" min="1" step="1" value={count} onChange={e=>change({count:e.target.value})}/>
+       {eligible.length===0&&<p className="hint">No matching formula-linked products. Clear the search or create a product.</p>}
+        <div className="action-bar"><Button size="sm" variant="secondary" onClick={onCreateProduct}>
+          <Plus size={15}/> New finished product</Button></div>
+        <Field label="Number of finished units" type="number" min="1" step="1" value={count} onChange={e=>change({count:e.target.value})}/>
        <div className="section-heading"><strong>2 · Where will the contents come from?</strong></div>
        <Tabs value={source} onChange={v=>change({source:v as MakeProductSource})}
          options={[{id:'ingredients',label:'Single herb ingredients'},{id:'bulk',label:'Prepared bulk'}]}/>
@@ -89,7 +92,7 @@ export function MakeProductPage({onEditProduct,onPackaging,draft,onDraftChange}:
              preview.ingredients.map(i=><RowItem key={i.herbId+'-'+i.form} title={i.name}
                detail={i.verified?`${i.form} · counted ${formatAmount(i.available)} ${unitLabel(i.form==='extract'?'fl_oz':'oz_wt')}`:'Physical count not verified'}
                end={<div className="make-count-actions"><span className={!i.enough?'text-danger':''}>−{formatAmount(i.amountOz)} {unitLabel(i.form==='extract'?'fl_oz':'oz_wt')}</span>
-                 {!i.verified&&<Button size="sm" variant="secondary" onClick={()=>setVerifyIngredient({herbId:i.herbId,form:i.form})}>Count</Button>}</div>}/>)}
+                 {(!i.verified||!i.enough)&&<Button size="sm" variant="secondary" onClick={()=>setVerifyIngredient({herbId:i.herbId,form:i.form})}>{i.verified?'Recount':'Count'}</Button>}</div>}/>)}
            <RowItem title={preview.containerName}
              detail={preview.containerVerified?`Counted: ${preview.containerAvailable}`:'Physical count not verified'}
              end={<strong>−{preview.containerRequired} containers</strong>}/>
