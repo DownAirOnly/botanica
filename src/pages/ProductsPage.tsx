@@ -7,10 +7,13 @@ import {packagingName} from '../data/packaging';
 import {useApp} from '../state/AppContext';
 
 const fresh=():Product=>({id:makeId(),name:'',kind:'tincture',packageOz:2,count:0});
-export function ProductsPage({onMakeProduct,initialEditProductId}:{onMakeProduct:(productId:string)=>void;initialEditProductId?:string|null}){
+export function ProductsPage({onMakeProduct,initialEditProductId,initialCreateFromProduction,onFinishProductCreation}:{
+   onMakeProduct:(productId:string)=>void;initialEditProductId?:string|null;
+   initialCreateFromProduction:boolean;onFinishProductCreation:(id?:string)=>void;
+ }){
  const {db,setDB,notify,reportError}=useApp();
  const [query,setQuery]=useState(''),[filter,setFilter]=useState('all');
- const [editing,setEditing]=useState<Product|null>(()=>{const p=db.products.find(p=>p.id===initialEditProductId);return p?structuredClone(p):null;});
+ const [editing,setEditing]=useState<Product|null>(()=>{if(initialCreateFromProduction)return fresh();const p=db.products.find(p=>p.id===initialEditProductId);return p?structuredClone(p):null;});
  const [adjustId,setAdjustId]=useState<string|null>(null),[adjustMode,setAdjustMode]=useState<'add'|'use'|'set'>('use'),
    [adjustCount,setAdjustCount]=useState('1'),[adjustReason,setAdjustReason]=useState('');
  const products=db.products.filter(p=>(filter==='all'||(filter==='uncounted'?!p.countCheckedAt:p.kind===filter))&&
@@ -21,9 +24,14 @@ export function ProductsPage({onMakeProduct,initialEditProductId}:{onMakeProduct
    try{
      const next=saveProduct(db,{...editing,count:0});
      setDB(()=>next);notify('Finished product details saved.');setEditing(null);
+      if(initialCreateFromProduction)onFinishProductCreation(editing.id);
    }catch(e){reportError(e);}
  }
- function adjust(){
+ function closeEditor(){
+    setEditing(null);
+    if(initialCreateFromProduction)onFinishProductCreation();
+  }
+  function adjust(){
    if(!adjusted)return;
    try{
      if(!adjustCount.trim())throw new Error('Enter a whole number.');
@@ -62,8 +70,9 @@ export function ProductsPage({onMakeProduct,initialEditProductId}:{onMakeProduct
      }):<EmptyState title="No products found" description="Add a product or import a catalog, then link its formula and container before making stock."/>}
    </Card>
    {editing&&<Modal title={db.products.some(p=>p.id===editing.id)?'Edit finished product':'New finished product'}
-     onClose={()=>setEditing(null)} footer={<><Button variant="ghost" onClick={()=>setEditing(null)}>Cancel</Button>
-       <Button onClick={save}>Save product</Button></>}>
+     onClose={closeEditor} footer={<><Button variant="ghost" onClick={closeEditor}>
+          {initialCreateFromProduction?'Back to Make Product':'Cancel'}</Button>
+       <Button onClick={save}>{initialCreateFromProduction?'Save & return':'Save product'}</Button></>}>
      <Field label="Product name" value={editing.name} onChange={e=>setEditing(p=>p&&({...p,name:e.target.value}))}/>
      <SelectField label="Product category" value={editing.kind} onChange={e=>setEditing(p=>p&&({...p,kind:e.target.value as Product['kind']}))}>
        <option value="tincture">Tincture</option><option value="tea">Tea</option><option value="salve">Salve</option>
