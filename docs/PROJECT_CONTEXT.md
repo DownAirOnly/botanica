@@ -162,3 +162,11 @@ The user requested the next version after v8. Focus is fewer taps and useful rec
 - Receipt form defaults use `localDate()` (device calendar date), not UTC ISO extraction. Stored receipt dates are still YYYY-MM-DD values; the exact original reported mismatch requires reproduction.
 - Readable shortage messages give needed/current quantities with correct measurement units. No change to `previewMakeProduct` readiness rules or `makeFinishedProduct` bulk-versus-ingredients exclusivity.
 - Schema v6 stays unchanged; v10 fresh/migrated workspaces carry appVersion 10. No new business-order or sales model. Additional mobile and owner workflow validation remains open.
+
+
+## v11 preflight — 2026-11-06 (unreleased development branch)
+
+- Branch: `v11-preflight-production-flow`. Source changes are not yet deployed to GitHub Pages.
+- Contextual new-product creation from Make Product returns to the preserved production draft with the saved product selected; cancel returns to the untouched draft. A previously verified ingredient that is now insufficient offers an in-place recount.
+- A lightweight pull-request TypeScript/Vite build is being added so changes can be validated before merging. Authenticated desktop and mobile interaction tests are **not** covered by this build.
+- Do not design customer orders or fulfillment deductions before asking the business owner how orders are currently received, prepared, delivered, and completed.
