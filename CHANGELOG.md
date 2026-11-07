@@ -1,5 +1,11 @@
 # Changelog
 
+## v11 preparation — pending validation
+
+- From Make Product, open a contextual new-product form; after saving, return with the new finished product selected. Cancelling returns without erasing the previous production draft.
+- Recount a previously verified ingredient directly from Make Product when there is insufficient stock for the selected run, as already possible for packaging shortages.
+- No orders, fulfillment, payments, sales, schema, stock math, or inventory migration changes. These workflow fixes are on a development branch, **not a released v11 build**.
+
 ## v10 — 2026-11-06 (less interrupted work)
 
 - Keep the Make Product draft (product, quantity, ingredient/bulk source and search) while moving between work areas; returning to Production no longer silently changes the inventory source.
