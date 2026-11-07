@@ -43,10 +43,11 @@ const PRODUCTION_SECTIONS:SectionOption<ProductionSection>[]=[
  {id:'bottle',title:'Make Product',description:'Mix or bottle finished stock',Icon:PackageCheck},
  {id:'history',title:'History',description:'Rates and production records',Icon:BookOpen},
 ];
-export function InventoryHub({section,onSectionChange,restockTab,selectedHerb,onSelectHerb,onOpenRestock,onMakeProduct,editProductId}:{
+export function InventoryHub({section,onSectionChange,restockTab,selectedHerb,onSelectHerb,onOpenRestock,onMakeProduct,editProductId,createProductFromProduction,onFinishProductCreation}:{
  section:InventorySection;onSectionChange:(s:InventorySection)=>void;
  restockTab:RestockTab;selectedHerb:string|null;onSelectHerb:(id:string|null)=>void;
  onOpenRestock:(tab:RestockTab)=>void;onMakeProduct:(id:string)=>void;editProductId:string|null;
+  createProductFromProduction:boolean;onFinishProductCreation:(id?:string)=>void;
 }){
  const {db}=useApp();const count=stockCountQueue(db).length+db.products.filter(p=>!p.countCheckedAt).length+db.packagingSupplies.filter(p=>!p.countCheckedAt).length;
  const reorder=restockQueue(db).length;
@@ -72,14 +73,15 @@ export function InventoryHub({section,onSectionChange,restockTab,selectedHerb,on
    {section==='herbs'&&<HerbsPage selected={selectedHerb} onSelect={onSelectHerb}
      onOpenRestock={()=>onOpenRestock('verify')}/>}
    {section==='packaging'&&<PackagingPage/>}
-   {section==='products'&&<ProductsPage onMakeProduct={onMakeProduct} initialEditProductId={editProductId}/>}
+   {section==='products'&&<ProductsPage onMakeProduct={onMakeProduct} initialEditProductId={editProductId}
+      initialCreateFromProduction={createProductFromProduction} onFinishProductCreation={onFinishProductCreation}/>}
   </div>
  </div>;
 }
-export function ProductionHub({section,onSectionChange,selectedRecipe,onMakeBatch,onOpenRestock,makeDraft,onMakeDraftChange,onEditProduct,onPackaging}:{
+export function ProductionHub({section,onSectionChange,selectedRecipe,onMakeBatch,onOpenRestock,makeDraft,onMakeDraftChange,onEditProduct,onCreateProduct,onPackaging}:{
  section:ProductionSection;onSectionChange:(s:ProductionSection)=>void;
  selectedRecipe:string|null;onMakeBatch:(id:string)=>void;onOpenRestock:()=>void;
- makeDraft:MakeProductDraft;onMakeDraftChange:(draft:MakeProductDraft)=>void;onEditProduct:(productId:string)=>void;onPackaging:()=>void;
+ makeDraft:MakeProductDraft;onMakeDraftChange:(draft:MakeProductDraft)=>void;onEditProduct:(productId:string)=>void;onCreateProduct:()=>void;onPackaging:()=>void;
 }){
  const {db}=useApp();const tasks=productionQueue(db);
  const bulk=Object.entries(db.bulk).filter(([,amount])=>amount>0);
@@ -117,7 +119,7 @@ export function ProductionHub({section,onSectionChange,selectedRecipe,onMakeBatc
    {section==='formulas'&&<RecipesPage onMakeBatch={onMakeBatch} onOpenRestock={onOpenRestock}/>}
    {section==='batch'&&<BatchesPage key={selectedRecipe||'new'} selectedRecipe={selectedRecipe}
      showTasks={false} onOpenRestock={onOpenRestock}/>}
-   {section==='bottle'&&<MakeProductPage draft={makeDraft} onDraftChange={onMakeDraftChange} onEditProduct={onEditProduct} onPackaging={onPackaging}/>} 
+   {section==='bottle'&&<MakeProductPage draft={makeDraft} onDraftChange={onMakeDraftChange} onEditProduct={onEditProduct} onCreateProduct={onCreateProduct} onPackaging={onPackaging}/>} 
    {section==='history'&&<ProductionHistoryPage/>}
   </div>
  </div>;

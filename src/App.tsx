@@ -15,7 +15,9 @@ export default function App(){
  const [makeDraft,setMakeDraft]=useState<MakeProductDraft>({productId:'',count:'1',source:'ingredients',query:''});
  const [editingProduct,setEditingProduct]=useState<string|null>(null);
  const [restockTab,setRestockTab]=useState<RestockTab>('verify');
+  const [creatingProductFromProduction,setCreatingProductFromProduction]=useState(false);
  function go(target:PageId){
+   setCreatingProductFromProduction(false);
   // Legacy deep-link actions are routed into the appropriate work area.
   switch(target){
    case 'herbs':setInventorySection('herbs');setPage('inventory');return;
@@ -42,7 +44,17 @@ export default function App(){
   setProductionSection('bottle');setPage('production');
  }
  function openPackaging(){setInventorySection('packaging');setPage('inventory');}
- function openProductEditor(id:string){setEditingProduct(id);setInventorySection('products');setPage('inventory');}
+ function openProductEditor(id:string){
+   setCreatingProductFromProduction(false);setEditingProduct(id);setInventorySection('products');setPage('inventory');
+  }
+  function createProductForMaking(){
+   setEditingProduct(null);setCreatingProductFromProduction(true);setInventorySection('products');setPage('inventory');
+  }
+  function finishProductCreation(productId?:string){
+   setCreatingProductFromProduction(false);
+   if(productId)setMakeDraft(prev=>({...prev,productId,count:'1',source:'ingredients',query:'',completed:undefined}));
+   setProductionSection('bottle');setPage('production');
+  }
  function makeBatch(recipeId:string){
   setBatchRecipe(recipeId);setProductionSection('batch');setPage('production');
  }
@@ -52,11 +64,12 @@ export default function App(){
  }
  return <Shell page={page} onNavigate={go}>
   {page==='home'&&<HomePage onNavigate={go} onOpenHerb={openHerb} onOpenRestock={openRestock}/>}
-  {page==='inventory'&&<InventoryHub section={inventorySection} onSectionChange={setInventorySection}
-    restockTab={restockTab} selectedHerb={herb} onSelectHerb={setHerb} onOpenRestock={openRestock} onMakeProduct={makeProduct} editProductId={editingProduct}/>}
+  {page==='inventory'&&<InventoryHub section={inventorySection} onSectionChange={section=>{setCreatingProductFromProduction(false);setInventorySection(section);}}
+    restockTab={restockTab} selectedHerb={herb} onSelectHerb={setHerb} onOpenRestock={openRestock} onMakeProduct={makeProduct} editProductId={editingProduct}
+     createProductFromProduction={creatingProductFromProduction} onFinishProductCreation={finishProductCreation}/>}
   {page==='production'&&<ProductionHub section={productionSection} onSectionChange={changeProductionSection}
     selectedRecipe={batchRecipe} onMakeBatch={makeBatch} onOpenRestock={()=>openRestock('verify')}
-    makeDraft={makeDraft} onMakeDraftChange={setMakeDraft} onEditProduct={openProductEditor} onPackaging={openPackaging}/>}
+    makeDraft={makeDraft} onMakeDraftChange={setMakeDraft} onEditProduct={openProductEditor} onCreateProduct={createProductForMaking} onPackaging={openPackaging}/>}
   {page==='items'&&<ItemsPage/>}
   {page==='settings'&&<SettingsPage/>}
  </Shell>;
